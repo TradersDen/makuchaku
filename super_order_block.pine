@@ -1,6 +1,6 @@
 //@version=5
 //This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
-indicator('Super OrderBlock / FVG / BoS Tools by makuchaku & eFe', overlay=true, max_boxes_count=500, max_lines_count=500)
+indicator('Super OrderBlock / FVG / BoS Tools by makuchaku & eFe with Alert System','Super OrderBlock 1.0.7', overlay=true, max_boxes_count=500, max_lines_count=500)
 
 plotOB = input.bool(defval=true, title='Plot OB', group='Order Blocks')
 obBullColor = input.color(defval=color.new(color.green, 90), title='Bullish OB Color', inline='Set Custom Color', group='Order Blocks')
@@ -33,8 +33,13 @@ mitRJBColor = input.color(defval=color.new(color.gray, 90), title='Mitigated RJB
 
 plotPVT = input.bool(defval=true, title='Plot Pivots', group='Pivots')
 pivotLookup  = input.int(defval=1, minval=1, maxval=5,title='Pivot Lookup', group='Pivots', tooltip='Minimum = 1, Maximum = 5')
-pvtTopColor = input.color(defval=color.new(color.silver, 0), title='Pivot Top Color', group='Pivots', inline='PVT Color')
-pvtBottomColor = input.color(defval=color.new(color.silver, 0), title='Pivot Bottom Color', group='Pivots', inline='PVT Color')
+pvtTopColor = input.color(defval=color.new(color.red, 0), title='Pivot Top Color', group='Pivots', inline='PVT Color')
+pvtBottomColor = input.color(defval=color.new(color.green, 0), title='Pivot Bottom Color', group='Pivots', inline='PVT Color')
+
+plotLiq = input.bool(defval=true, title='Plot Liquidity', group='Liquidity')
+pvtStyle = input.string(defval=line.style_solid, title='Liquidity Line Style', options=[line.style_solid, line.style_dotted, line.style_dashed, line.style_arrow_left, line.style_arrow_right, line.style_arrow_both], group='Liquidity')
+pvtMax = input.int(defval=10, title='Maximum Liquidity Displayed', minval=1, maxval=500, group='Liquidity', tooltip='Minimum = 1, Maximum = 500')
+
 
 plotBOS = input.bool(defval=false, title='Plot BoS', group='Crossovers', inline='BOS sets')
 useHighLowForBullishBoS = input.bool(defval=false, title='Use High/Low for Bullish BoS (for Bearish setup)', group='Crossovers')
@@ -176,9 +181,13 @@ if plotOB
     _controlBox(_bullBoxesOB, high, low, _ob)
 
 //////////////////// Fair Value Gap //////////////////
+bullStructureBreakingFVG = false 
+bearStructureBreakingFVG = false 
+
 //Bullish FVG Box Plotting
 if isFvgUp(0)
     box _bullboxFVG = na
+    bullStructureBreakingFVG := bullStructureBreakingFVG
     if plotStructureBreakingFVG and (close[1] > top) and (low[1] < top) and (high[2] < top) and (low > top)
         _bullboxFVG := box.new(left=bar_index-2, top=low[0], right=bar_index, bottom=high[2], bgcolor=fvgStructBreakingColor, border_color=color.new(fvgStructBreakingColor, fvgBorderTransparency), border_style=fvgBoxBorder, border_width=1,
          text=plotLabelFVG ? _fvgLabel  + _plus : _empty, text_halign=text.align_right, text_valign=text.align_bottom, text_size=fvgLabelSize, text_color=fvgLabelColor)        
@@ -192,6 +201,7 @@ if isFvgUp(0)
 //Bearish FVG Box Plotting    
 if isFvgDown(0)
     box _bearboxFVG = na
+    bearStructureBreakingFVG := (high[1] > bottom) and (low[2] > bottom) and (high < bottom)
     if plotStructureBreakingFVG and (close[1] < bottom) and (high[1] > bottom) and (low[2] > bottom) and (high < bottom)
         _bearboxFVG := box.new(left=bar_index-2, top=low[2], right=bar_index, bottom=high[0], bgcolor=fvgStructBreakingColor, border_color=color.new(fvgStructBreakingColor, fvgBorderTransparency), border_style=fvgBoxBorder, border_width=1,
          text=plotLabelFVG ? _fvgLabel  + _minus : _empty, text_halign=text.align_right, text_valign=text.align_bottom, text_size=fvgLabelSize, text_color=fvgLabelColor)    
@@ -207,10 +217,14 @@ if plotFVG or plotStructureBreakingFVG
     _controlBox(_bullBoxesFVG, high, low, _fvg)
 
 //////////////////// Rejection Block //////////////////
+bullRJB = false 
+bearRJB = false 
+
 if plotRJB
     isDownRjbObCondition = isObDown(1)
     isDownRjb1 = isDownRjbObCondition and  (high[1] < (close[2] + 0.2*(high[2]-close[2]))) // RJB is on trapped's wick and <50% of the wick was covered by signal
     isDownRjb2 = isDownRjbObCondition and (high[1] > high[2]) // RJB is on signal's wick
+    bearRJB := isDownRjb1 or isDownRjb2
     if isDownRjb1 and plotRJB
         _bearboxRJB = box.new(left=bar_index-2, top=high[2], right=bar_index, bottom=close[2], bgcolor=rjbBearColor, border_color=color.new(rjbBearColor, rjbBorderTransparency), border_style=rjbBoxBorder, border_width=1,
          text=plotLabelRJB ? _rjbLabel  + _minus : _empty, text_halign=text.align_right, text_valign=text.align_bottom, text_size=rjbLabelSize, text_color=rjbLabelColor)
@@ -230,6 +244,8 @@ if plotRJB
     isUpRjbObCondition = isObUp(1)
     isUpRjb1 = isUpRjbObCondition and (low[1] > (close[2] - 0.2*(close[2]-low[2]))) // RJB is on trapped's wick and <50% of the wick was covered by signal
     isUpRjb2 = isUpRjbObCondition and (low[1] < low[2]) // RJB is on signal's wick
+    bullRJB := isUpRjb1 or isUpRjb2
+
     if isUpRjb1 and plotRJB
         _bullboxRJB = box.new(left=bar_index-2, top=close[2], right=bar_index, bottom=low[2], bgcolor=rjbBullColor, border_color=color.new(rjbBullColor, rjbBorderTransparency), border_style=rjbBoxBorder, border_width=1,
          text=plotLabelRJB ? _rjbLabel  + _plus : _empty, text_halign=text.align_right, text_valign=text.align_bottom, text_size=rjbLabelSize, text_color=rjbLabelColor)
@@ -250,6 +266,9 @@ if plotRJB
 
 //////////////////// Crossovers a.k.a. Break of Structure ////////////////////
 //Bullish BOS Box Plotting
+bullBOS = false 
+bearBOS = false 
+
 if plotBOS
     if ta.crossover(useHighLowForBullishBoS ? high : close, top)
         _bullboxBOS = box.new(left=bar_index, top=top, right=bosBoxFlag ? bar_index+bosBoxLength : bar_index+1, bottom=bottom, bgcolor=bosBullColor, border_color=color.new(bosBullColor, bosBorderTransparency), border_style=bosBoxBorder, border_width=1, 
@@ -257,7 +276,8 @@ if plotBOS
         if array.size(_bullBoxesBOS) > bosMaxBoxSet
             box.delete(array.shift(_bullBoxesBOS))
         array.push(_bullBoxesBOS, _bullboxBOS)
-
+        bullBOS := true
+        
 //Bearish BOS Box Plotting        
 if plotBOS 
     if ta.crossunder(useHighLowForBearishBoS ? low : close, bottom)
@@ -266,6 +286,7 @@ if plotBOS
         if array.size(_bearBoxesBOS) > bosMaxBoxSet
             box.delete(array.shift(_bearBoxesBOS))
         array.push(_bearBoxesBOS, _bearboxBOS)
+        bearBOS := true
 
 if plotBOS
     _controlBox(_bearBoxesBOS, high, low, _bos)
@@ -291,3 +312,202 @@ barcolor(plotHVB and isDown(0) and isHighVolume ? hvbBearColor : na, title="Bear
 ///////////////// Stacked OB + FVG //////////////////
 plotshape(plotOBFVG and isFvgDown(0) and isObDown(1), "Bearish OB+FVG Stack", style=shape.diamond, location=location.abovebar, color=obfvgBearColor, size=size.tiny)
 plotshape(plotOBFVG and isFvgUp(0) and isObUp(1), "Bullish OB+FVG Stack", style=shape.diamond, location=location.belowbar, color=obfvgBullColor, size=size.tiny)
+
+//////////////////// Liquidity ////////////////////
+var line[] _lowLiqLines  = array.new_line()
+var line[] _highLiqLines  = array.new_line()
+
+//Functions
+isPvtHigh(_index, __high) =>
+    __high[_index+2] < __high[_index+1] and __high[_index+1] > __high[_index]
+
+    //  |   <-- pivot high
+    // |||  <-- candles
+    // 210  <-- candle index
+
+isPvtLow(_index, __low) =>
+    __low[_index+2] > __low[_index+1] and __low[_index+1] < __low[_index]
+
+    // |||  <-- candles
+    //  |   <-- pivot low
+    // 210  <-- candle index
+
+//Function to Calculte Line Length
+_controlLine(_lines, __high, __low) =>
+    if array.size(_lines) > 0
+        for i = array.size(_lines) - 1 to 0 by 1
+            _line = array.get(_lines, i)
+            _lineLow = line.get_y1(_line)
+            _lineHigh = line.get_y2(_line)
+            _lineRight = line.get_x2(_line)
+            if na or (bar_index == _lineRight and not((__high > _lineLow and __low < _lineLow) or (__high > _lineHigh and __low < _lineHigh)))
+                line.set_x2(_line, bar_index + 1)
+
+//Pivot Low Line Plotting
+if isPvtLow(0, low) and plotLiq
+    _lowPVT = line.new(x1=bar_index - 1, y1=low[1], x2=bar_index, y2=low[1], extend=extend.none, color= pvtBottomColor, style=pvtStyle)
+    if array.size(_lowLiqLines) >= pvtMax
+        line.delete(array.shift(_lowLiqLines))
+    array.push(_lowLiqLines, _lowPVT)
+
+//Pivot High Line Plotting
+if isPvtHigh(0, high) and plotLiq
+    _highPVT = line.new(x1=bar_index - 1, y1=high[1], x2=bar_index, y2=high[1], extend=extend.none, color=pvtTopColor, style=pvtStyle)
+    if array.size(_highLiqLines) >= pvtMax
+        line.delete(array.shift(_highLiqLines))
+    array.push(_highLiqLines, _highPVT)
+
+if plotLiq
+    _controlLine(_lowLiqLines, high, low)
+    _controlLine(_highLiqLines, high, low)
+
+
+
+
+//////////////////// Market Structure Break ////////////////////
+
+zigzag_len = input.int(9, "ZigZag Length", group='MSB')
+show_zigzag = input.bool(false, "Show Zigzag", group='MSB')
+show_msb = input.bool(true, "Show MSB", group='MSB')
+fib_factor = input.float(0.33, "Fib Factor for breakout confirmation", 0, 1, 0.01, group='MSB')
+
+masTopColor = input.color(defval=color.teal, title='MSB Top Color', group='MSB')
+masBottomColor = input.color(defval=color.orange, title='MSB Bottom Color', group='MSB')
+
+var float[] high_points_arr = array.new_float(5)
+var int[] high_index_arr = array.new_int(5)
+var float[] low_points_arr = array.new_float(5)
+var int[] low_index_arr = array.new_int(5)
+
+
+to_up = high >= ta.highest(zigzag_len)
+to_down = low <= ta.lowest(zigzag_len)
+
+trend = 1
+trend := nz(trend[1], 1)
+trend := trend == 1 and to_down ? -1 : trend == -1 and to_up ? 1 : trend
+
+last_trend_up_since = ta.barssince(to_up[1])
+low_val = ta.lowest(nz(last_trend_up_since > 0 ? last_trend_up_since : 1, 1))
+low_index = bar_index - ta.barssince(low_val == low)
+
+last_trend_down_since = ta.barssince(to_down[1])
+high_val = ta.highest(nz(last_trend_down_since > 0 ? last_trend_down_since : 1, 1))
+high_index = bar_index - ta.barssince(high_val == high)
+
+if ta.change(trend) != 0
+    if trend == 1
+        array.push(low_points_arr, low_val)
+        array.push(low_index_arr, low_index)
+    if trend == -1
+        array.push(high_points_arr, high_val)
+        array.push(high_index_arr, high_index)
+
+
+f_get_high(ind) =>
+    [array.get(high_points_arr, array.size(high_points_arr) - 1 - ind), array.get(high_index_arr, array.size(high_index_arr) - 1 - ind)]
+
+
+f_get_low(ind) =>
+    [array.get(low_points_arr, array.size(low_points_arr) - 1 - ind), array.get(low_index_arr, array.size(low_index_arr) - 1 - ind)]
+
+
+[h0, h0i] = f_get_high(0)
+[h1, h1i] = f_get_high(1)
+
+[l0, l0i] = f_get_low(0)
+[l1, l1i] = f_get_low(1)
+
+if ta.change(trend) != 0 and show_zigzag
+    if trend == 1
+        line.new(h0i, h0, l0i, l0)
+    if trend == -1
+        line.new(l0i, l0, h0i, h0)
+
+market = 1
+market := nz(market[1], 1)
+// market := market == 1 and close < l0 and low < l0 - math.abs(h0 - l0) * fib_factor ? -1 : market == -1 and close > h0 and high > h0 + math.abs(h0 - l0) * fib_factor ? 1 : market
+last_l0 = ta.valuewhen(ta.change(market) != 0, l0, 0)
+last_h0 = ta.valuewhen(ta.change(market) != 0, h0, 0)
+market := last_l0 == l0 or last_h0 == h0 ? market : market == 1 and l0 < l1 and l0 < l1 - math.abs(h0 - l1) * fib_factor ? -1 : market == -1 and h0 > h1 and h0 > h1 + math.abs(h1 - l0) * fib_factor ? 1 : market
+
+
+bu_ob_index = bar_index
+bu_ob_index := nz(bu_ob_index[1], bar_index)
+for i=h1i to l0i[zigzag_len]
+    index = bar_index - i 
+    if open[index] > close[index]
+        bu_ob_index := bar_index[index]
+
+bu_ob_since = bar_index - bu_ob_index
+
+be_ob_index = bar_index
+be_ob_index := nz(be_ob_index[1], bar_index)
+for i=l1i to h0i[zigzag_len]
+    index = bar_index - i 
+    if open[index] < close[index]
+        be_ob_index := bar_index[index]
+
+be_ob_since = bar_index - be_ob_index
+
+be_bb_index = bar_index
+be_bb_index := nz(be_bb_index[1], bar_index)
+for i=h1i to l1i
+    index = bar_index - i
+    if open[index] > close[index]
+        be_bb_index := bar_index[index]
+
+be_bb_since = bar_index - be_bb_index
+
+bu_bb_index = bar_index
+bu_bb_index := nz(bu_bb_index[1], bar_index)
+for i=l1i to h1i
+    index = bar_index - i
+    if open[index] > close[index]
+        bu_bb_index := bar_index[index]
+
+bu_bb_since = bar_index - bu_bb_index
+
+if show_msb
+    if ta.change(market) != 0
+        if market == 1
+            line.new(h1i, h1, h0i, h1, color=masTopColor, width=2)
+            label.new(int(math.avg(h1i, l0i)), h1, "MSB+", color=color.new(color.black, 100), style=label.style_label_down, textcolor=masTopColor, size=size.small)
+
+        if market == -1
+            line.new(l1i, l1, l0i, l1, color=masBottomColor, width=2)
+            label.new(int(math.avg(l1i, h0i)), l1, "MSB-", color=color.new(color.black, 100), style=label.style_label_up, textcolor=masBottomColor, size=size.small)
+ 
+
+///////////////// Alert //////////////////
+
+// Any direction combined
+alertcondition((isFvgUp(0) and isObUp(1)) or discountDiscount or discountDiscount1 or bullStructureBreakingFVG or bullBOS or (isFvgDown(0) and isObDown(1)) or premiumPremium or premiumPremium1 or bearStructureBreakingFVG or bearBOS or bullRJB or bearRJB, title="01 Any Strong/Weak Bullish/Bearish", message="Bullish/Bearish OB+FVG Stack or PPDD OB or BOS+- or FVG+- Structure or RJB+ or RJB-")
+alertcondition((isFvgUp(0) and isObUp(1)) or isFvgUp(0) or isObUp(0) or discountDiscount or discountDiscount1 or bullStructureBreakingFVG or bullBOS or (isFvgDown(0) and isObDown(1)) or isFvgDown(0) or isObDown(0) or premiumPremium or premiumPremium1 or bearStructureBreakingFVG or bearBOS or bullRJB or bearRJB, title="02 Any Bullish/Bearish", message="Bullish/Bearish OB+FVG Stack or PPDD OB or BOS+- or FVG+- Structure or OB+- or FGP+- or BOS+- or RJB+ or RJB-")
+
+
+//Bullish
+alertcondition((isFvgUp(0) and isObUp(1)) or isFvgUp(0) or isObUp(0) or discountDiscount or discountDiscount1 or bullStructureBreakingFVG or bullBOS or bullRJB, title="03 Any Bullish", message="Bullish OB+FVG Stack or Bullish PPDD OB or BOS+ or FVG+ Structure or RJB+ or OB+ or FGP+")
+alertcondition((isFvgUp(0) and isObUp(1)) or discountDiscount or discountDiscount1 or bullStructureBreakingFVG or bullBOS or bullRJB, title="04 Any Strong/Weak Bullish", message="Bullish OB+FVG Stack or Bullish PPDD OB or BOS+ or FVG+ Structure or RJB+")
+alertcondition(isFvgUp(0) and isObUp(1), title="05 Bullish OB+FVG Stack", message="Bullish OB+FVG Stack")
+alertcondition(bullStructureBreakingFVG, title="06 Bullish FVG Structure Breaking", message="Bullish FVG Structure Breaking")
+alertcondition(discountDiscount, title="07 Strong Bullish PPDD OB ", message="Strong Bullish PPDD OB")
+alertcondition(discountDiscount1, title="08 Weak Bullish PPDD OB ", message="Weak Bullish PPDD OB")
+alertcondition(bullBOS, title="09 Bullish BOS+ ", message="Bullish BOS+")
+alertcondition(isFvgUp(0) , title="10 Bullish FVG ", message="Bullish FVG")
+alertcondition(isObUp(0), title="11 Bullish OB ", message="Bullish OB")
+alertcondition(bullRJB, title="12 Bullish RJB+", message="Bullish RJB+")
+
+
+
+//Bearish
+alertcondition((isFvgDown(0) and isObDown(1)) or isFvgDown(0) or isObDown(0) or premiumPremium or premiumPremium1 or bearStructureBreakingFVG or bearBOS or bearRJB, title="12 Any Bearish", message="Bearish OB+FVG Stack or Bearish PPDD OB or BOS- or FVG- Structure or RJB- or OB- or FGP-")
+alertcondition((isFvgDown(0) and isObDown(1)) or premiumPremium or premiumPremium1 or bearStructureBreakingFVG or bearBOS or bearRJB, title="12 Any Strong/Weak Bearish", message="Bearish OB+FVG Stack or Bearish PPDD OB or BOS- or FVG- Structure or RJB-")
+alertcondition(isFvgDown(0) and isObDown(1), title="14 Bearish OB+FVG Stack", message="Bearish OB+FVG Stack")
+alertcondition(bearStructureBreakingFVG, title="15 Bearish FVG Structure Breaking", message="Bearish FVG Structure Breaking")
+alertcondition(premiumPremium, title="16 Strong Bearish PPDD OB ", message="Strong Bearish PPDD OB")
+alertcondition(premiumPremium1, title="17 Weak Bearish PPDD OB ", message="Weak Bearish PPDD OB")
+alertcondition(bearBOS, title="18 Bearish BOS-", message="Bearish BOS-")
+alertcondition(isFvgDown(0), title="19 Bearish FVG", message="Bearish FVG")
+alertcondition(isObDown(0), title="20 Bearish OB", message="Bearish OB")
+alertcondition(bearRJB, title="21 Bearish RJB+", message="Bearish RJB-")
