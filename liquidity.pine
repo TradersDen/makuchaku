@@ -1,0 +1,55 @@
+//@version=5
+indicator("Liquidity by makuchaku & eFe", overlay=true, max_lines_count=500)
+
+plotLiq = input.bool(defval=true, title='Plot Liquidity', group='Liquidity')
+pvtTopColor = input.color(defval=color.red, title='Liquidity Top Color', group='Liquidity')
+pvtBtmColor = input.color(defval=color.green, title='Liquidity Bottom Color', group='Liquidity')
+pvtStyle = input.string(defval=line.style_solid, title='Liquidity Line Style', options=[line.style_solid, line.style_dotted, line.style_dashed, line.style_arrow_left, line.style_arrow_right, line.style_arrow_both], group='Liquidity')
+pvtMax = input.int(defval=10, title='Maximum Liquidity Displayed', minval=1, maxval=500, group='Liquidity', tooltip='Minimum = 1, Maximum = 500')
+
+var line[] _lowLiqLines  = array.new_line()
+var line[] _highLiqLines  = array.new_line()
+
+//Functions
+isPvtHigh(_index, __high) =>
+    __high[_index+2] < __high[_index+1] and __high[_index+1] > __high[_index]
+
+    //  |   <-- pivot high
+    // |||  <-- candles
+    // 210  <-- candle index
+
+isPvtLow(_index, __low) =>
+    __low[_index+2] > __low[_index+1] and __low[_index+1] < __low[_index]
+
+    // |||  <-- candles
+    //  |   <-- pivot low
+    // 210  <-- candle index
+
+//Function to Calculte Line Length
+_controlLine(_lines, __high, __low) =>
+    if array.size(_lines) > 0
+        for i = array.size(_lines) - 1 to 0 by 1
+            _line = array.get(_lines, i)
+            _lineLow = line.get_y1(_line)
+            _lineHigh = line.get_y2(_line)
+            _lineRight = line.get_x2(_line)
+            if na or (bar_index == _lineRight and not((__high > _lineLow and __low < _lineLow) or (__high > _lineHigh and __low < _lineHigh)))
+                line.set_x2(_line, bar_index + 1)
+
+//Pivot Low Line Plotting
+if isPvtLow(0, low) and plotLiq
+    _lowPVT = line.new(x1=bar_index - 1, y1=low[1], x2=bar_index, y2=low[1], extend=extend.none, color=pvtTopColor, style=pvtStyle)
+    if array.size(_lowLiqLines) >= pvtMax
+        line.delete(array.shift(_lowLiqLines))
+    array.push(_lowLiqLines, _lowPVT)
+
+//Pivot High Line Plotting
+if isPvtHigh(0, high) and plotLiq
+    _highPVT = line.new(x1=bar_index - 1, y1=high[1], x2=bar_index, y2=high[1], extend=extend.none, color=pvtBtmColor, style=pvtStyle)
+    if array.size(_highLiqLines) >= pvtMax
+        line.delete(array.shift(_highLiqLines))
+    array.push(_highLiqLines, _highPVT)
+
+if plotLiq
+    _controlLine(_lowLiqLines, high, low)
+    _controlLine(_highLiqLines, high, low)
