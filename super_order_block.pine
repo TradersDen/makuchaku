@@ -1,6 +1,6 @@
 //@version=5
 //This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
-indicator('Super OrderBlock / FVG / BoS Tools by makuchaku & eFe with Alert System','Super OrderBlock 1.0.7', overlay=true, max_boxes_count=500, max_lines_count=500)
+indicator('Super OrderBlock / FVG / BoS and ABC with Alert','Super OrderBlock 1.1', overlay=true, max_boxes_count=500, max_lines_count=500)
 
 plotOB = input.bool(defval=true, title='Plot OB', group='Order Blocks')
 obBullColor = input.color(defval=color.new(color.green, 90), title='Bullish OB Color', inline='Set Custom Color', group='Order Blocks')
@@ -13,8 +13,8 @@ mitOBColor = input.color(defval=color.new(color.gray, 90), title='Mitigated OB C
 
 plotFVG = input.bool(defval=true, title='Plot FVG', group='Fair Value Gaps', inline='FVG sets')
 plotStructureBreakingFVG = input.bool(defval=true, title='Plot Structure Breaking FVG', group='Fair Value Gaps', inline='FVG sets')
-fvgBullColor = input.color(defval=color.new(color.black, 90), title='Bullish FVG Color', inline='Set Custom Color', group='Fair Value Gaps')
-fvgBearColor = input.color(defval=color.new(color.black, 90), title='Bearish FVG Color', inline='Set Custom Color', group='Fair Value Gaps')
+fvgBullColor = input.color(defval=color.new(color.aqua, 90), title='Bullish FVG Color', inline='Set Custom Color', group='Fair Value Gaps')
+fvgBearColor = input.color(defval=color.new(color.orange, 90), title='Bearish FVG Color', inline='Set Custom Color', group='Fair Value Gaps')
 fvgStructBreakingColor = input.color(defval=color.new(color.blue, 90), title='Structure Breaking FVG Color', inline='Set Custom Color', group='Fair Value Gaps')
 fvgBoxBorder = input.string(defval=line.style_solid, title='FVG Box Border Style', options=[line.style_dashed, line.style_dotted, line.style_solid], group='Fair Value Gaps', tooltip='To disable border, set Border Width below to 0')
 fvgBorderTransparency = input.int(defval=80, title='FVG Border Box Transparency', minval=0, maxval=100, group='Fair Value Gaps')
@@ -23,8 +23,8 @@ filterMitFVG = input.bool(defval=false, title='Custom Color Mitigated FVG', grou
 mitFVGColor = input.color(defval=color.new(color.gray, 90), title='Mitigated FVG Color', group='Fair Value Gaps', inline='Set Custom Color Mit FVG', tooltip='Set Transparency to 0 to make mitigated FVG disappear')
 
 plotRJB = input.bool(defval=false, title='Plot RJB', group='Rejection Blocks', inline='RJB sets')
-rjbBullColor = input.color(defval=color.new(color.green, 90), title='Bullish RJB Color', inline='Set Custom Color', group='Rejection Blocks')
-rjbBearColor = input.color(defval=color.new(color.red, 90), title='Bearish RJB Color', inline='Set Custom Color', group='Rejection Blocks')
+rjbBullColor = input.color(defval=color.new(#a6ff00, 90), title='Bullish RJB Color', inline='Set Custom Color', group='Rejection Blocks')
+rjbBearColor = input.color(defval=color.new(#ff00ce, 90), title='Bearish RJB Color', inline='Set Custom Color', group='Rejection Blocks')
 rjbBoxBorder = input.string(defval=line.style_solid, title='RJB Box Border Style', options=[line.style_dashed, line.style_dotted, line.style_solid], group='Rejection Blocks', tooltip='To disable border, set Border Width below to 0')
 rjbBorderTransparency = input.int(defval=80, title='RJB Border Box Transparency', minval=0, maxval=100, group='Rejection Blocks')
 rjbMaxBoxSet = input.int(defval=10, title='Maximum RJB Box Displayed', minval=1, maxval=100, group='Rejection Blocks', tooltip='Minimum = 1, Maximum = 100')
@@ -37,7 +37,7 @@ pvtTopColor = input.color(defval=color.new(color.red, 0), title='Pivot Top Color
 pvtBottomColor = input.color(defval=color.new(color.green, 0), title='Pivot Bottom Color', group='Pivots', inline='PVT Color')
 
 plotLiq = input.bool(defval=true, title='Plot Liquidity', group='Liquidity')
-pvtStyle = input.string(defval=line.style_solid, title='Liquidity Line Style', options=[line.style_solid, line.style_dotted, line.style_dashed, line.style_arrow_left, line.style_arrow_right, line.style_arrow_both], group='Liquidity')
+pvtStyle = input.string(defval=line.style_dashed, title='Liquidity Line Style', options=[line.style_solid, line.style_dotted, line.style_dashed, line.style_arrow_left, line.style_arrow_right, line.style_arrow_both], group='Liquidity')
 pvtMax = input.int(defval=10, title='Maximum Liquidity Displayed', minval=1, maxval=500, group='Liquidity', tooltip='Minimum = 1, Maximum = 500')
 
 
@@ -46,9 +46,9 @@ useHighLowForBullishBoS = input.bool(defval=false, title='Use High/Low for Bulli
 useHighLowForBearishBoS = input.bool(defval=false, title='Use High/Low for Bearish BoS (for Bullish setup)', group='Crossovers')
 bosBoxFlag  = input.bool(title='BoS Box Length Manually', defval=false, group='Crossovers', tooltip='If activated the BoS Boxes will not extend unitl crossed by price. Instead will extend by the amount of bars choosen in the "Set BoS Box Length Manually" option')
 bosBoxLength  = input.int(title='BoS Box Length Manually', defval=3, minval=1, maxval=5, group='Crossovers', inline='BoS Boxes', tooltip='If "Set BoS Box Length Manually" is marked, choose by how many bars. Minimum = 1, Maximum = 5')
-bosBullColor = input.color(defval=color.new(color.green, 90), title='Bullish BoS Color', inline='Set Custom Color', group='Crossovers')
-bosBearColor = input.color(defval=color.new(color.red, 90), title='Bearish BoS Color', inline='Set Custom Color', group='Crossovers')
-bosBoxBorder = input.string(defval=line.style_solid, title='BoS Box Border Style', options=[line.style_dashed, line.style_dotted, line.style_solid], group='Crossovers', tooltip='To disable border, set Border Width below to 0')
+bosBullColor = input.color(defval=color.new(#00FFAB, 90), title='Bullish BoS Color', inline='Set Custom Color', group='Crossovers')
+bosBearColor = input.color(defval=color.new(#BD4291, 90), title='Bearish BoS Color', inline='Set Custom Color', group='Crossovers')
+bosBoxBorder = input.string(defval=line.style_dotted, title='BoS Box Border Style', options=[line.style_dashed, line.style_dotted, line.style_solid], group='Crossovers', tooltip='To disable border, set Border Width below to 0')
 bosBorderTransparency = input.int(defval=80, title='BoS Border Box Transparency', minval=0, maxval=100, group='Crossovers')
 bosMaxBoxSet = input.int(defval=10, title='Maximum BoS Box Displayed', minval=1, maxval=100, group='Crossovers', tooltip='Minimum = 1, Maximum = 100')
 
@@ -366,118 +366,393 @@ if plotLiq
 
 //////////////////// Market Structure Break ////////////////////
 
-zigzag_len = input.int(9, "ZigZag Length", group='MSB')
-show_zigzag = input.bool(false, "Show Zigzag", group='MSB')
-show_msb = input.bool(true, "Show MSB", group='MSB')
-fib_factor = input.float(0.33, "Fib Factor for breakout confirmation", 0, 1, 0.01, group='MSB')
 
-masTopColor = input.color(defval=color.teal, title='MSB Top Color', group='MSB')
-masBottomColor = input.color(defval=color.orange, title='MSB Bottom Color', group='MSB')
-
-var float[] high_points_arr = array.new_float(5)
-var int[] high_index_arr = array.new_int(5)
-var float[] low_points_arr = array.new_float(5)
-var int[] low_index_arr = array.new_int(5)
-
-
-to_up = high >= ta.highest(zigzag_len)
-to_down = low <= ta.lowest(zigzag_len)
-
-trend = 1
-trend := nz(trend[1], 1)
-trend := trend == 1 and to_down ? -1 : trend == -1 and to_up ? 1 : trend
-
-last_trend_up_since = ta.barssince(to_up[1])
-low_val = ta.lowest(nz(last_trend_up_since > 0 ? last_trend_up_since : 1, 1))
-low_index = bar_index - ta.barssince(low_val == low)
-
-last_trend_down_since = ta.barssince(to_down[1])
-high_val = ta.highest(nz(last_trend_down_since > 0 ? last_trend_down_since : 1, 1))
-high_index = bar_index - ta.barssince(high_val == high)
-
-if ta.change(trend) != 0
-    if trend == 1
-        array.push(low_points_arr, low_val)
-        array.push(low_index_arr, low_index)
-    if trend == -1
-        array.push(high_points_arr, high_val)
-        array.push(high_index_arr, high_index)
+//Originated from https://www.tradingview.com/pine/?id=PUB%3B5482306601b045cd8df3d01ae0f72b0b 
+string      bos_type        = input.string      ("High and Low",    title='MSB trigger',                            options=["High and Low", "Close and Open"], group='MSB and S&D')
+//bool        pv2_sv          = input.bool        (false,              title='Display 2nd order pivots', group='MSB and S&D')
+bool        bos_sv          = input.bool        (true,              title='Highlight candles that broke structure', group='MSB and S&D')
+bool        msb_sv          = input.bool        (true,              title='Plot market structure broke lines', group='MSB and S&D')
+bool        box_sv          = input.bool        (false,              title='Plot supply-demand boxes', group='MSB and S&D')
+int         box_test_delay  = input.int         (3,                 title='Delay to count test of demand box', group='MSB and S&D')
+int         box_fill_delay  = input.int         (3,                 title='Delay to count fill of demand box', group='MSB and S&D')
+bool        box_test_sv     = input.bool        (true,              title='Dim tested demand boxes', group='MSB and S&D')
+bool        box_stop_sv     = input.bool        (true,              title='Stop plotting filled demand boxes', group='MSB and S&D')
+//bool        box_tested_sv     = input.bool        (false,           title='Show tested demand boxes', group='MSB and S&D')
 
 
-f_get_high(ind) =>
-    [array.get(high_points_arr, array.size(high_points_arr) - 1 - ind), array.get(high_index_arr, array.size(high_index_arr) - 1 - ind)]
+masSupplyColor = input.color(defval=color.new(color.red, 90), title='Supply Color', group='MSB and S&D')
+masDemandColor = input.color(defval=color.new(color.green, 90), title='Demand Color', group='MSB and S&D')
+masTestedSupplyColor = input.color(defval=color.new(#F9EBC8, 90), title='Tested Supply Color', group='MSB and S&D')
+masTestedDemandColor = input.color(defval=color.new(#A0BCC2, 90), title='Tested Demand Color', group='MSB and S&D')
+
+masTopColor = input.color(defval=color.aqua, title='MSB Top Color' , group='MSB and S&D')
+masBottomColor = input.color(defval=color.orange, title='MSB Bottom Color', group='MSB and S&D')
+masCandleColor = input.color(defval=color.fuchsia, title='MSB Candle Color', group='MSB and S&D')
 
 
-f_get_low(ind) =>
-    [array.get(low_points_arr, array.size(low_points_arr) - 1 - ind), array.get(low_index_arr, array.size(low_index_arr) - 1 - ind)]
+var float[] pvh1_price      = array.new_float   (1000, na)          // high
+var int[]   pvh1_time       = array.new_int     (1000, na)
+var float[] pvl1_price      = array.new_float   (1000, na)          // low
+var int[]   pvl1_time       = array.new_int     (1000, na)
 
+var float[] pvh2_price      = array.new_float   (1000, na)          // higher high
+var int[]   pvh2_time       = array.new_int     (1000, na)
+var float[] pvl2_price      = array.new_float   (1000, na)          // lower low
+var int[]   pvl2_time       = array.new_int     (1000, na)
 
-[h0, h0i] = f_get_high(0)
-[h1, h1i] = f_get_high(1)
+var float   htcmrll_price   = na                                    // high that created most recent ll
+var int     htcmrll_time    = na
+var float   ltcmrhh_price   = na                                    // low that created most recent hh
+var int     ltcmrhh_time    = na
 
-[l0, l0i] = f_get_low(0)
-[l1, l1i] = f_get_low(1)
+var box[]   long_boxes      = array.new_box()
+var box[]   short_boxes     = array.new_box()
+var box[]   oldlong_boxes   = array.new_box()
+var box[]   oldshort_boxes  = array.new_box()
 
-if ta.change(trend) != 0 and show_zigzag
-    if trend == 1
-        line.new(h0i, h0, l0i, l0)
-    if trend == -1
-        line.new(l0i, l0, h0i, h0)
+var line[]  bull_bos_lines  = array.new_line()
+var line[]  bear_bos_lines  = array.new_line()
 
-market = 1
-market := nz(market[1], 1)
-// market := market == 1 and close < l0 and low < l0 - math.abs(h0 - l0) * fib_factor ? -1 : market == -1 and close > h0 and high > h0 + math.abs(h0 - l0) * fib_factor ? 1 : market
-last_l0 = ta.valuewhen(ta.change(market) != 0, l0, 0)
-last_h0 = ta.valuewhen(ta.change(market) != 0, h0, 0)
-market := last_l0 == l0 or last_h0 == h0 ? market : market == 1 and l0 < l1 and l0 < l1 - math.abs(h0 - l1) * fib_factor ? -1 : market == -1 and h0 > h1 and h0 > h1 + math.abs(h1 - l0) * fib_factor ? 1 : market
+var label[] la_ph2          = array.new_label   (1000, na)
+var label[] la_pl2          = array.new_label   (1000, na)
 
+var float   temp_pv_0       = na
+var float   temp_pv_1       = na
+var float   temp_pv_2       = na
 
-bu_ob_index = bar_index
-bu_ob_index := nz(bu_ob_index[1], bar_index)
-for i=h1i to l0i[zigzag_len]
-    index = bar_index - i 
-    if open[index] > close[index]
-        bu_ob_index := bar_index[index]
+bool        pvh             = high < high[1] and high[1] > high[2]
+bool        pvl             = low > low[1] and low[1] < low[2]
 
-bu_ob_since = bar_index - bu_ob_index
+int         pv1_time        = bar_index[1]
+float       pv1_high        = high[1]
+float       pv1_low         = low[1]
+float       trigger_high    = bos_type=="High and Low" ? high : math.max(open, close)
+float       trigger_low     = bos_type=="High and Low" ? low : math.min(open, close)
 
-be_ob_index = bar_index
-be_ob_index := nz(be_ob_index[1], bar_index)
-for i=l1i to h0i[zigzag_len]
-    index = bar_index - i 
-    if open[index] < close[index]
-        be_ob_index := bar_index[index]
+bool        bos_candle      = false
+bool        new_ph_2nd      = false
+bool        new_pl_2nd      = false
 
-be_ob_since = bar_index - be_ob_index
+if barstate.isconfirmed
 
-be_bb_index = bar_index
-be_bb_index := nz(be_bb_index[1], bar_index)
-for i=h1i to l1i
-    index = bar_index - i
-    if open[index] > close[index]
-        be_bb_index := bar_index[index]
+    if pvh
+        array.pop(pvh1_price)
+        array.pop(pvh1_time)
+        array.unshift(pvh1_price, pv1_high)
+        array.unshift(pvh1_time, pv1_time)
+        if array.size(pvh1_price) > 2
+            temp_pv_0 := array.get(pvh1_price, 0)
+            temp_pv_1 := array.get(pvh1_price, 1)
+            temp_pv_2 := array.get(pvh1_price, 2)
+            if temp_pv_0 > temp_pv_1
+                for i = 0 to array.size(pvl1_time) - 1 by 1
+                    temp_ltcmrhh_time = array.get(pvl1_time, i)
+                    if temp_ltcmrhh_time < array.get(pvh1_time, 0)
+                        ltcmrhh_price := array.get(pvl1_price, i)
+                        ltcmrhh_time := temp_ltcmrhh_time
+                        break
+            if temp_pv_0 < temp_pv_1 and temp_pv_1 > temp_pv_2
+                array.pop(pvh2_price)
+                array.pop(pvh2_time)
+                array.unshift(pvh2_price, temp_pv_1)
+                array.unshift(pvh2_time, array.get(pvh1_time, 1))
+                new_ph_2nd := true
 
-be_bb_since = bar_index - be_bb_index
+    if pvl
+        array.pop(pvl1_price)
+        array.pop(pvl1_time)
+        array.unshift(pvl1_price, pv1_low)
+        array.unshift(pvl1_time, pv1_time)
+        if array.size(pvl1_price) > 2
+            temp_pv_0 := array.get(pvl1_price, 0)
+            temp_pv_1 := array.get(pvl1_price, 1)
+            temp_pv_2 := array.get(pvl1_price, 2)
+            if temp_pv_0 < temp_pv_1
+                for i = 0 to array.size(pvh1_time) - 1 by 1
+                    temp_htcmrll_time = array.get(pvh1_time, i)
+                    if temp_htcmrll_time < array.get(pvl1_time, 0)
+                        htcmrll_price := array.get(pvh1_price, i)
+                        htcmrll_time := temp_htcmrll_time
+                        break
+            if temp_pv_0 > temp_pv_1 and temp_pv_1 < temp_pv_2
+                array.pop(pvl2_price)
+                array.pop(pvl2_time)
+                array.unshift(pvl2_price, temp_pv_1)
+                array.unshift(pvl2_time, array.get(pvl1_time, 1))
+                new_pl_2nd := true
 
-bu_bb_index = bar_index
-bu_bb_index := nz(bu_bb_index[1], bar_index)
-for i=l1i to h1i
-    index = bar_index - i
-    if open[index] > close[index]
-        bu_bb_index := bar_index[index]
+    if trigger_high > htcmrll_price
+        if msb_sv
+            array.push(bull_bos_lines, line.new(x1=htcmrll_time, y1=htcmrll_price, x2=bar_index, y2=htcmrll_price, color=masTopColor, width=1))
+        if box_sv
+            array.push(long_boxes, box.new(left=array.get(pvl1_time, 0), top=math.min(high[bar_index - array.get(pvl1_time, 0)], high[bar_index - array.get(pvl1_time, 0) + 1]), right=bar_index, bottom=array.get(pvl1_price, 0), bgcolor=masDemandColor, border_color=masDemandColor, extend=extend.right))
+        bos_candle := true
+        htcmrll_price := na
+        htcmrll_price
 
-bu_bb_since = bar_index - bu_bb_index
+    if trigger_low < ltcmrhh_price
+        if msb_sv
+            array.push(bear_bos_lines, line.new(x1=ltcmrhh_time, y1=ltcmrhh_price, x2=bar_index, y2=ltcmrhh_price, color= masBottomColor, width=1))
+        if box_sv
+            array.push(short_boxes, box.new(left=array.get(pvh1_time, 0), top=array.get(pvh1_price, 0), right=bar_index, bottom=math.max(low[bar_index - array.get(pvh1_time, 0)], low[bar_index - array.get(pvh1_time, 0) + 1]), bgcolor=masSupplyColor, border_color= masSupplyColor, extend=extend.right))
+        bos_candle := true
+        ltcmrhh_price := na
+        ltcmrhh_price
 
-if show_msb
-    if ta.change(market) != 0
-        if market == 1
-            line.new(h1i, h1, h0i, h1, color=masTopColor, width=2)
-            label.new(int(math.avg(h1i, l0i)), h1, "MSB+", color=color.new(color.black, 100), style=label.style_label_down, textcolor=masTopColor, size=size.small)
+    if array.size(short_boxes) > 0
+        for i = array.size(short_boxes) - 1 to 0 by 1
+            tbox = array.get(short_boxes, i)
+            _top = box.get_top(tbox)
+            _bottom = box.get_bottom(tbox)
+            if trigger_high > _bottom and box.get_left(tbox) + box_test_delay < bar_index and box_test_sv
+                box.set_bgcolor(tbox, masTestedSupplyColor)
+                box.set_border_color(tbox, masTestedSupplyColor)
+            if trigger_high > _top and box.get_left(tbox) + box_fill_delay < bar_index
+                if box_stop_sv
+                    box.set_right(tbox, bar_index)
+                    box.set_extend(tbox, extend.none)
+                    array.unshift(oldshort_boxes, tbox)
+                    array.remove(short_boxes, i)
 
-        if market == -1
-            line.new(l1i, l1, l0i, l1, color=masBottomColor, width=2)
-            label.new(int(math.avg(l1i, h0i)), l1, "MSB-", color=color.new(color.black, 100), style=label.style_label_up, textcolor=masBottomColor, size=size.small)
+    if array.size(long_boxes) > 0
+        for i = array.size(long_boxes) - 1 to 0 by 1
+            lbox = array.get(long_boxes, i)
+            _top = box.get_top(lbox)
+            _bottom = box.get_bottom(lbox)
+            if trigger_low < _top and box.get_left(lbox) + box_test_delay < bar_index and box_test_sv
+                box.set_bgcolor(lbox, masTestedDemandColor)
+                box.set_border_color(lbox, masTestedDemandColor)
+            if trigger_low < _bottom and box.get_left(lbox) + box_fill_delay < bar_index
+                if box_stop_sv
+                    box.set_right(lbox, bar_index)
+                    box.set_extend(lbox, extend.none)
+                    array.unshift(oldlong_boxes, lbox)
+                    array.remove(long_boxes, i)
+    // if pv2_sv
+    //     if new_ph_2nd
+    //         array.pop(la_ph2)
+    //         array.unshift(la_ph2, label.new(x = array.get(pvh2_time, 0), y = array.get(pvh2_price, 0), xloc = xloc.bar_index, style = label.style_label_down,    color = #770000FF, size = size.tiny))
+    //     if new_pl_2nd
+    //         array.pop(la_pl2)
+    //         array.unshift(la_pl2, label.new(x = array.get(pvl2_time, 0), y = array.get(pvl2_price, 0), xloc = xloc.bar_index, style = label.style_label_up,      color = #007700FF, size = size.tiny))
+
+barcolor(bos_candle and bos_sv ? masCandleColor : na)
+
+///////////////// ABC //////////////////
+
+groupABC = "ABC"
+prd = input.int(defval=8, title='ZigZag Period', minval=2, maxval=50, group=groupABC)
+fiboup = input.float(defval=0.618, title='Fibonacci Max', group=groupABC)
+fibodn = input.float(defval=0.382, title='Fibonacci Min', group=groupABC)
+
+errorrate = input.float(defval=5.0, title='Error Rate', minval=0, maxval=30, group=groupABC) / 100
+showabc = input.bool(defval=true, title='Show ABC', group=groupABC)
+
+showzigzag = input.bool(defval=false, title='Show Zig Zag', group=groupABC, inline='zigzag')
+upcol = input.color(defval=color.lime, title='', group=groupABC, inline='zigzag')
+dncol = input.color(defval=color.red, title='', group=groupABC, inline='zigzag')
+
+showfib = input.bool(defval=false, title='Show Fibo', group=groupABC, inline='fib')
+fibColor = input.color(defval=color.blue, title='', group=groupABC, inline='fib')
+
+showABCSignal = input.bool(defval=false, title='Show ABC Signal', group=groupABC)
+
+showcloud = input.bool(defval=false, title='Show Cloud', group=groupABC, inline='cloud')
+c_upcol = input.color(defval=color.new(color.lime, 75), title='', group=groupABC, inline='cloud')
+c_dncol = input.color(defval=color.new(color.red, 75), title='', group=groupABC, inline='cloud')
+srcma = input.source(defval=close, title='Source for Moving Averages', group=groupABC)
+malen1 = input.int(defval=50, title='SMA 1 Length', minval=1, group=groupABC)
+malen2 = input.int(defval=100, title='SMA 2 Length', minval=1, group=groupABC)
+malen3 = input.int(defval=150, title='SMA 3 Length', minval=1, group=groupABC)
+malen4 = input.int(defval=200, title='SMA 4 Length', minval=1, group=groupABC)
+malen5 = input.int(defval=20, title='EMA 1 Length', minval=1, group=groupABC)
+malen6 = input.int(defval=40, title='EMA 2 Length', minval=1, group=groupABC)
+
+ma_array = array.new_float(6)
+array.set(ma_array, 0, ta.sma(srcma, malen1))
+array.set(ma_array, 1, ta.sma(srcma, malen2))
+array.set(ma_array, 2, ta.sma(srcma, malen3))
+array.set(ma_array, 3, ta.sma(srcma, malen4))
+array.set(ma_array, 4, ta.ema(srcma, malen5))
+array.set(ma_array, 5, ta.ema(srcma, malen6))
+
+float umax = na
+float umin = na
+float lmax = na
+float lmin = na
+int upper = 0
+int lower = 0
+for x = 1 to 6 by 1
+    ma = array.get(ma_array, x - 1)
+    if ma >= math.max(open, close)
+        upper += 1
+        if na(umax)
+            umax := ma
+            umin := ma
+            umin
+        else
+            umax := math.max(umax, ma)
+            umin := math.min(umin, ma)
+            umin
+    else if ma <= math.min(open, close)
+        lower += 1
+        if na(lmax)
+            lmax := ma
+            lmin := ma
+            lmin
+        else
+            lmax := math.max(lmax, ma)
+            lmin := math.min(lmin, ma)
+            lmin
+
+var int trend = 0
+trend := lower > 0 and upper == 0 and lower[1] > 0 and upper[1] == 0 ? 1 : lower == 0 and upper > 0 and lower[1] == 0 and upper[1] > 0 ? -1 : trend
+
+tucolor = trend == 1 ? c_upcol : na
+tdcolor = trend == -1 ? c_dncol : na
+
+fill(plot(umax, color=na), plot(umin, color=na), color=showcloud ? tdcolor : na, transp=90)
+fill(plot(lmax, color=na), plot(lmin, color=na), color=showcloud ? tucolor : na, transp=90)
+
+//===================================================================
+
+// zigzag part
+get_ph_pl_dir(len) =>
+    float ph = ta.highestbars(high, len) == 0 ? high : na
+    float pl = ta.lowestbars(low, len) == 0 ? low : na
+    var dir = 0
+    iff_1 = pl and na(ph) ? -1 : dir
+    dir := ph and na(pl) ? 1 : iff_1
+    [ph, pl, dir]
+
+[ph, pl, dir] = get_ph_pl_dir(prd)
+
+var max_array_size = 10
+var zigzag = array.new_float(0)
+
+add_to_zigzag(value, bindex) =>
+    array.unshift(zigzag, bindex)
+    array.unshift(zigzag, value)
+    if array.size(zigzag) > max_array_size
+        array.pop(zigzag)
+        array.pop(zigzag)
+
+update_zigzag(value, bindex) =>
+    if array.size(zigzag) == 0
+        add_to_zigzag(value, bindex)
+    else
+        if dir == 1 and value > array.get(zigzag, 0) or dir == -1 and value < array.get(zigzag, 0)
+            array.set(zigzag, 0, value)
+            array.set(zigzag, 1, bindex)
+        0.
+
+dir_changed = ta.change(dir)
+if ph or pl
+    if dir_changed
+        add_to_zigzag(dir == 1 ? ph : pl, bar_index)
+    else
+        update_zigzag(dir == 1 ? ph : pl, bar_index)
+
+if showzigzag and array.size(zigzag) > 5
+    var line zzline1 = na
+    var line zzline2 = na
+    line.delete(zzline1)
+    line.delete(zzline2)
+    zzline1 := line.new(x1=math.round(array.get(zigzag, 1)), y1=array.get(zigzag, 0), x2=math.round(array.get(zigzag, 3)), y2=array.get(zigzag, 2), color=dir == 1 ? upcol : dncol, width=2, style=line.style_dashed)
+    zzline2 := line.new(x1=math.round(array.get(zigzag, 3)), y1=array.get(zigzag, 2), x2=math.round(array.get(zigzag, 5)), y2=array.get(zigzag, 4), color=dir == -1 ? upcol : dncol, width=2, style=line.style_dashed)
  
+if showfib and array.size(zigzag) > 5
+       // min/max fibo levels
+    zzlen = math.abs(array.get(zigzag, 2) - array.get(zigzag, 4))
+    fmin = dir == 1 ? array.get(zigzag, 2) + zzlen * (fibodn - errorrate) : array.get(zigzag, 4) + zzlen * (1 - fibodn + errorrate)
+    fmax = dir == 1 ? array.get(zigzag, 2) + zzlen * (fiboup + errorrate) : array.get(zigzag, 4) + zzlen * (1 - fiboup - errorrate)
+    var line fibo1 = na
+    var line fibo2 = na
+    line.delete(fibo1)
+    line.delete(fibo2)
+    fibo1 := line.new(x1=math.round(array.get(zigzag, 3)), y1=fmin, x2=math.round(array.get(zigzag, 3)) + 1, y2=fmin, color=fibColor, style=line.style_dashed, extend=extend.right)
+    fibo2 := line.new(x1=math.round(array.get(zigzag, 3)), y1=fmax, x2=math.round(array.get(zigzag, 3)) + 1, y2=fmax, color=fibColor, style=line.style_dashed, extend=extend.right)
+    fibo2
+    
+zchange = array.size(zigzag) > 0 ? array.get(zigzag, 0) : 0.0
+abc = array.new_float(0)
+if ta.change(zchange) and array.size(zigzag) > 5 and (pl and trend == 1 and dir == -1 and low < array.max(ma_array) or ph and trend == -1 and dir == 1 and high > array.min(ma_array))
+    a = array.get(zigzag, 0)
+    b = array.get(zigzag, 2)
+    b_loc = array.get(zigzag, 3)
+    c = array.get(zigzag, 4)
+    c_loc = array.get(zigzag, 5)
+    rate = (a - b) / (c - b)
+    if rate >= fibodn - fibodn * errorrate and rate <= fiboup + fiboup * errorrate
+        array.push(abc, b)
+        array.push(abc, b_loc)
+        array.push(abc, c)
+        array.push(abc, c_loc)
+
+draw_line(dir, x1_, y1_, x2_, y2_, x3_, y3_) =>
+    l1 = line.new(x1=x1_, y1=y1_, x2=x2_, y2=y2_, color=dir == 1 ? upcol : dncol, width=1)
+    l2 = line.new(x1=x2_, y1=y2_, x2=x3_, y2=y3_, color=dir == 1 ? dncol : upcol, width=1)
+    [l1, l2]
+
+draw_label(dir, x1_, y1_, x2_, y2_, x3_, y3_) =>
+    alabel = label.new(x=x1_, y=y1_, text='C', style=dir == 1 ? label.style_label_down : label.style_label_up, color=color.new(color.white, 100), textcolor=color.blue)
+    blabel = label.new(x=x2_, y=y2_, text='B', style=dir == -1 ? label.style_label_down : label.style_label_up, color=color.new(color.white, 100), textcolor=color.blue)
+    clabel = label.new(x=x3_, y=y3_, text='A', style=dir == 1 ? label.style_label_down : label.style_label_up, color=color.new(color.white, 100), textcolor=color.blue)
+    [alabel, blabel, clabel]
+
+var abclines = array.new_line(2)
+var abclabels = array.new_label(3)
+
+if showabc and array.size(abc) >= 4
+    //if not keepabc
+    line.delete(array.pop(abclines))
+    line.delete(array.pop(abclines))
+    label.delete(array.pop(abclabels))
+    label.delete(array.pop(abclabels))
+    label.delete(array.pop(abclabels))
+
+    [l1_, l2_] = draw_line(dir, bar_index, array.get(zigzag, 0), math.round(array.get(abc, 1)), array.get(abc, 0), math.round(array.get(abc, 3)), array.get(abc, 2))
+    array.unshift(abclines, l1_)
+    array.unshift(abclines, l2_)
+
+    [la1_, la2_, la3_] = draw_label(dir, bar_index, array.get(zigzag, 0), math.round(array.get(abc, 1)), array.get(abc, 0), math.round(array.get(abc, 3)), array.get(abc, 2))
+    array.unshift(abclabels, la1_)
+    array.unshift(abclabels, la2_)
+    array.unshift(abclabels, la3_)
+
+// bounce?
+lbounced = false
+sbounced = false
+for i = 0 to 5 by 1
+    if math.min(low, low[1]) <= array.get(ma_array, i) and close > array.get(ma_array, i) and close > open
+        lbounced := true
+        lbounced
+    if math.max(high, high[1]) >= array.get(ma_array, i) and close < array.get(ma_array, i) and close < open
+        sbounced := true
+        sbounced
+
+// stoch give signal?
+sto = ta.sma(ta.stoch(close, high, low, 5), 3)
+sto_sig = ta.sma(sto, 3)
+lstoch = sto[1] <= sto_sig[1] and sto > sto_sig and sto[1] < 50  //and sto_sig > 20
+sstoch = sto[1] >= sto_sig[1] and sto < sto_sig and sto[1] > 50  //and sto_sig < 80
+
+/// check if conditions met
+there_is_abc = array.size(abc) != 0
+var float last_zz_point = 0.
+last_zz_point := array.size(zigzag) > 2 and there_is_abc ? array.get(zigzag, 0) : last_zz_point
+var abc_bar_count = 0
+abc_bar_count := there_is_abc ? 0 : abc_bar_count + 1
+hhh_ = ta.highest(abc_bar_count + 1)
+lll_ = ta.lowest(abc_bar_count + 1)
+
+// long condition
+long = trend == 1 and abc_bar_count <= 6 and lbounced and lll_ >= last_zz_point
+short = trend == -1 and abc_bar_count <= 6 and sbounced and hhh_ <= last_zz_point
+
+plotshape(showABCSignal ? long : na, style=shape.triangleup, color=upcol, location=location.belowbar, size=size.small)
+plotshape(showABCSignal ? short : na, style=shape.triangledown, color=dncol, location=location.abovebar, size=size.small)
+
 
 ///////////////// Alert //////////////////
 
@@ -497,17 +772,19 @@ alertcondition(bullBOS, title="09 Bullish BOS+ ", message="Bullish BOS+")
 alertcondition(isFvgUp(0) , title="10 Bullish FVG ", message="Bullish FVG")
 alertcondition(isObUp(0), title="11 Bullish OB ", message="Bullish OB")
 alertcondition(bullRJB, title="12 Bullish RJB+", message="Bullish RJB+")
+alertcondition(long, title='13 ABC Long', message='ABC Long')
 
 
 
 //Bearish
-alertcondition((isFvgDown(0) and isObDown(1)) or isFvgDown(0) or isObDown(0) or premiumPremium or premiumPremium1 or bearStructureBreakingFVG or bearBOS or bearRJB, title="12 Any Bearish", message="Bearish OB+FVG Stack or Bearish PPDD OB or BOS- or FVG- Structure or RJB- or OB- or FGP-")
-alertcondition((isFvgDown(0) and isObDown(1)) or premiumPremium or premiumPremium1 or bearStructureBreakingFVG or bearBOS or bearRJB, title="12 Any Strong/Weak Bearish", message="Bearish OB+FVG Stack or Bearish PPDD OB or BOS- or FVG- Structure or RJB-")
-alertcondition(isFvgDown(0) and isObDown(1), title="14 Bearish OB+FVG Stack", message="Bearish OB+FVG Stack")
-alertcondition(bearStructureBreakingFVG, title="15 Bearish FVG Structure Breaking", message="Bearish FVG Structure Breaking")
-alertcondition(premiumPremium, title="16 Strong Bearish PPDD OB ", message="Strong Bearish PPDD OB")
-alertcondition(premiumPremium1, title="17 Weak Bearish PPDD OB ", message="Weak Bearish PPDD OB")
-alertcondition(bearBOS, title="18 Bearish BOS-", message="Bearish BOS-")
-alertcondition(isFvgDown(0), title="19 Bearish FVG", message="Bearish FVG")
-alertcondition(isObDown(0), title="20 Bearish OB", message="Bearish OB")
-alertcondition(bearRJB, title="21 Bearish RJB+", message="Bearish RJB-")
+alertcondition((isFvgDown(0) and isObDown(1)) or isFvgDown(0) or isObDown(0) or premiumPremium or premiumPremium1 or bearStructureBreakingFVG or bearBOS or bearRJB, title="13 Any Bearish", message="Bearish OB+FVG Stack or Bearish PPDD OB or BOS- or FVG- Structure or RJB- or OB- or FGP-")
+alertcondition((isFvgDown(0) and isObDown(1)) or premiumPremium or premiumPremium1 or bearStructureBreakingFVG or bearBOS or bearRJB, title="14 Any Strong/Weak Bearish", message="Bearish OB+FVG Stack or Bearish PPDD OB or BOS- or FVG- Structure or RJB-")
+alertcondition(isFvgDown(0) and isObDown(1), title="15 Bearish OB+FVG Stack", message="Bearish OB+FVG Stack")
+alertcondition(bearStructureBreakingFVG, title="16 Bearish FVG Structure Breaking", message="Bearish FVG Structure Breaking")
+alertcondition(premiumPremium, title="17 Strong Bearish PPDD OB ", message="Strong Bearish PPDD OB")
+alertcondition(premiumPremium1, title="18 Weak Bearish PPDD OB ", message="Weak Bearish PPDD OB")
+alertcondition(bearBOS, title="19 Bearish BOS-", message="Bearish BOS-")
+alertcondition(isFvgDown(0), title="20 Bearish FVG", message="Bearish FVG")
+alertcondition(isObDown(0), title="21 Bearish OB", message="Bearish OB")
+alertcondition(bearRJB, title="22 Bearish RJB+", message="Bearish RJB-")
+alertcondition(short, title='23 ABC Short', message='ABC Short')
