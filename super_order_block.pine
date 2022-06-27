@@ -1,6 +1,6 @@
 //@version=5
 //This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
-indicator('Super OrderBlock / FVG / BoS and ABC with Alert','Super OrderBlock 1.1', overlay=true, max_boxes_count=500, max_lines_count=500)
+indicator('Super OrderBlock / FVG / BoS and ABC with Alert','Super OrderBlock 1.1.1', overlay=true, max_boxes_count=550, max_lines_count=500)
 
 plotOB = input.bool(defval=true, title='Plot OB', group='Order Blocks')
 obBullColor = input.color(defval=color.new(color.green, 90), title='Bullish OB Color', inline='Set Custom Color', group='Order Blocks')
@@ -53,8 +53,8 @@ bosBorderTransparency = input.int(defval=80, title='BoS Border Box Transparency'
 bosMaxBoxSet = input.int(defval=10, title='Maximum BoS Box Displayed', minval=1, maxval=100, group='Crossovers', tooltip='Minimum = 1, Maximum = 100')
 
 plotHVB = input.bool(defval=true, title='Plot HVB', group='High Volume Bar', tooltip='A candle where the average volume is higher than last few bars.')
-hvbBullColor = input.color(defval=color.green, title='Bullish HVB Color', inline='Set Custom Color', group='High Volume Bar')
-hvbBearColor = input.color(defval=color.red, title='Bearish HVB Color', inline='Set Custom Color', group='High Volume Bar')
+hvbBullColor = input.color(defval=color.new(#127a02,0), title='Bullish HVB Color', inline='Set Custom Color', group='High Volume Bar')
+hvbBearColor = input.color(defval=color.new(#a6020a,0), title='Bearish HVB Color', inline='Set Custom Color', group='High Volume Bar')
 hvbEMAPeriod = input.int(defval=12, minval=1, title='Volume EMA Period', group='High Volume Bar')
 hvbMultiplier = input.float(defval=1.5, title='Volume Multiplier', minval=1, maxval=100, group='High Volume Bar')
 
@@ -306,8 +306,9 @@ plotshape(discountDiscount1, "Bullish PPDD Weak OB", style=shape.xcross, locatio
 ////////////////// High Volume Bars //////////////////
 volEma = ta.ema(volume, hvbEMAPeriod)
 isHighVolume = volume > (hvbMultiplier * volEma)
-barcolor(plotHVB and isUp(0) and isHighVolume ? hvbBullColor : na, title="Bullish HVB")
-barcolor(plotHVB and isDown(0) and isHighVolume ? hvbBearColor : na, title="Bearish HVB")
+//Redone on MSB part
+// barcolor(plotHVB and isUp(0) and isHighVolume ? hvbBullColor : na, title="Bullish HVB")
+// barcolor(plotHVB and isDown(0) and isHighVolume ? hvbBearColor : na, title="Bearish HVB")
 
 ///////////////// Stacked OB + FVG //////////////////
 plotshape(plotOBFVG and isFvgDown(0) and isObDown(1), "Bearish OB+FVG Stack", style=shape.diamond, location=location.abovebar, color=obfvgBearColor, size=size.tiny)
@@ -385,8 +386,8 @@ masDemandColor = input.color(defval=color.new(color.green, 90), title='Demand Co
 masTestedSupplyColor = input.color(defval=color.new(#F9EBC8, 90), title='Tested Supply Color', group='MSB and S&D')
 masTestedDemandColor = input.color(defval=color.new(#A0BCC2, 90), title='Tested Demand Color', group='MSB and S&D')
 
-masTopColor = input.color(defval=color.aqua, title='MSB Top Color' , group='MSB and S&D')
-masBottomColor = input.color(defval=color.orange, title='MSB Bottom Color', group='MSB and S&D')
+masTopColor = input.color(defval=color.aqua, title='Bullish MSB+ Color' , group='MSB and S&D')
+masBottomColor = input.color(defval=color.orange, title='Bearish MSB- Color', group='MSB and S&D')
 masCandleColor = input.color(defval=color.fuchsia, title='MSB Candle Color', group='MSB and S&D')
 
 
@@ -483,7 +484,7 @@ if barstate.isconfirmed
 
     if trigger_high > htcmrll_price
         if msb_sv
-            array.push(bull_bos_lines, line.new(x1=htcmrll_time, y1=htcmrll_price, x2=bar_index, y2=htcmrll_price, color=masTopColor, width=1))
+            array.push(bull_bos_lines, line.new(x1=htcmrll_time, y1=htcmrll_price, x2=bar_index, y2=htcmrll_price, color=masTopColor, width=2))
         if box_sv
             array.push(long_boxes, box.new(left=array.get(pvl1_time, 0), top=math.min(high[bar_index - array.get(pvl1_time, 0)], high[bar_index - array.get(pvl1_time, 0) + 1]), right=bar_index, bottom=array.get(pvl1_price, 0), bgcolor=masDemandColor, border_color=masDemandColor, extend=extend.right))
         bos_candle := true
@@ -492,7 +493,7 @@ if barstate.isconfirmed
 
     if trigger_low < ltcmrhh_price
         if msb_sv
-            array.push(bear_bos_lines, line.new(x1=ltcmrhh_time, y1=ltcmrhh_price, x2=bar_index, y2=ltcmrhh_price, color= masBottomColor, width=1))
+            array.push(bear_bos_lines, line.new(x1=ltcmrhh_time, y1=ltcmrhh_price, x2=bar_index, y2=ltcmrhh_price, color= masBottomColor, width=2))
         if box_sv
             array.push(short_boxes, box.new(left=array.get(pvh1_time, 0), top=array.get(pvh1_price, 0), right=bar_index, bottom=math.max(low[bar_index - array.get(pvh1_time, 0)], low[bar_index - array.get(pvh1_time, 0) + 1]), bgcolor=masSupplyColor, border_color= masSupplyColor, extend=extend.right))
         bos_candle := true
@@ -536,12 +537,136 @@ if barstate.isconfirmed
     //         array.pop(la_pl2)
     //         array.unshift(la_pl2, label.new(x = array.get(pvl2_time, 0), y = array.get(pvl2_price, 0), xloc = xloc.bar_index, style = label.style_label_up,      color = #007700FF, size = size.tiny))
 
-barcolor(bos_candle and bos_sv ? masCandleColor : na)
+
+barcolor((bos_candle and isUp(0) and bos_sv) ? masTopColor : ((plotHVB and isUp(0) and isHighVolume) ? hvbBullColor : na))
+barcolor((bos_candle and isDown(0) and bos_sv) ? masBottomColor : ((plotHVB and isDown(0) and isHighVolume) ? hvbBearColor : na))
+
+
+// barcolor(bos_candle and bos_sv ? masCandleColor : ((plotHVB and isUp(0) and isHighVolume) ? hvbBullColor : na))
+// barcolor(bos_candle and bos_sv ? masCandleColor : ((plotHVB and isDown(0) and isHighVolume) ? hvbBearColor : na))
+
+
+
+//////////////////// Market Structure Break & Order Block by EmreKb ////////////////////
+
+//https://www.tradingview.com/script/DkE7UniD/
+zigzag_len = input.int(9, "ZigZag Length", group='Market Structure Break')
+show_zigzag = input.bool(false, "Show Zigzag", group='Market Structure Break')
+show_msb = input.bool(true, "Show MSB", group='Market Structure Break')
+fib_factor = input.float(0.33, "Fib Factor for breakout confirmation", 0, 1, 0.01, group='Market Structure Break')
+
+msbTopColor = input.color(defval=color.teal, title='MSB Top Color', group='Market Structure Break')
+msbBottomColor = input.color(defval=color.orange, title='MSB Bottom Color', group='Market Structure Break')
+
+var float[] high_points_arr = array.new_float(5)
+var int[] high_index_arr = array.new_int(5)
+var float[] low_points_arr = array.new_float(5)
+var int[] low_index_arr = array.new_int(5)
+
+
+to_up = high >= ta.highest(zigzag_len)
+to_down = low <= ta.lowest(zigzag_len)
+
+trendMSB = 1
+trendMSB := nz(trendMSB[1], 1)
+trendMSB := trendMSB == 1 and to_down ? -1 : trendMSB == -1 and to_up ? 1 : trendMSB
+
+last_trend_up_since = ta.barssince(to_up[1])
+low_val = ta.lowest(nz(last_trend_up_since > 0 ? last_trend_up_since : 1, 1))
+low_index = bar_index - ta.barssince(low_val == low)
+
+last_trend_down_since = ta.barssince(to_down[1])
+high_val = ta.highest(nz(last_trend_down_since > 0 ? last_trend_down_since : 1, 1))
+high_index = bar_index - ta.barssince(high_val == high)
+
+if ta.change(trendMSB) != 0
+    if trendMSB == 1
+        array.push(low_points_arr, low_val)
+        array.push(low_index_arr, low_index)
+    if trendMSB == -1
+        array.push(high_points_arr, high_val)
+        array.push(high_index_arr, high_index)
+
+
+f_get_high(ind) =>
+    [array.get(high_points_arr, array.size(high_points_arr) - 1 - ind), array.get(high_index_arr, array.size(high_index_arr) - 1 - ind)]
+
+
+f_get_low(ind) =>
+    [array.get(low_points_arr, array.size(low_points_arr) - 1 - ind), array.get(low_index_arr, array.size(low_index_arr) - 1 - ind)]
+
+
+[h0, h0i] = f_get_high(0)
+[h1, h1i] = f_get_high(1)
+
+[l0, l0i] = f_get_low(0)
+[l1, l1i] = f_get_low(1)
+
+if ta.change(trendMSB) != 0 and show_zigzag
+    if trendMSB == 1
+        line.new(h0i, h0, l0i, l0)
+    if trendMSB == -1
+        line.new(l0i, l0, h0i, h0)
+
+market = 1
+market := nz(market[1], 1)
+// market := market == 1 and close < l0 and low < l0 - math.abs(h0 - l0) * fib_factor ? -1 : market == -1 and close > h0 and high > h0 + math.abs(h0 - l0) * fib_factor ? 1 : market
+last_l0 = ta.valuewhen(ta.change(market) != 0, l0, 0)
+last_h0 = ta.valuewhen(ta.change(market) != 0, h0, 0)
+market := last_l0 == l0 or last_h0 == h0 ? market : market == 1 and l0 < l1 and l0 < l1 - math.abs(h0 - l1) * fib_factor ? -1 : market == -1 and h0 > h1 and h0 > h1 + math.abs(h1 - l0) * fib_factor ? 1 : market
+
+
+bu_ob_index = bar_index
+bu_ob_index := nz(bu_ob_index[1], bar_index)
+for i=h1i to l0i[zigzag_len]
+    index = bar_index - i 
+    if open[index] > close[index]
+        bu_ob_index := bar_index[index]
+
+bu_ob_since = bar_index - bu_ob_index
+
+be_ob_index = bar_index
+be_ob_index := nz(be_ob_index[1], bar_index)
+for i=l1i to h0i[zigzag_len]
+    index = bar_index - i 
+    if open[index] < close[index]
+        be_ob_index := bar_index[index]
+
+be_ob_since = bar_index - be_ob_index
+
+be_bb_index = bar_index
+be_bb_index := nz(be_bb_index[1], bar_index)
+for i=h1i to l1i
+    index = bar_index - i
+    if open[index] > close[index]
+        be_bb_index := bar_index[index]
+
+be_bb_since = bar_index - be_bb_index
+
+bu_bb_index = bar_index
+bu_bb_index := nz(bu_bb_index[1], bar_index)
+for i=l1i to h1i
+    index = bar_index - i
+    if open[index] > close[index]
+        bu_bb_index := bar_index[index]
+
+bu_bb_since = bar_index - bu_bb_index
+
+if show_msb
+    if ta.change(market) != 0
+        if market == 1
+            line.new(h1i, h1, h0i, h1, color=msbTopColor, width=2)
+            label.new(int(math.avg(h1i, l0i)), h1, "MSB+", color=color.new(color.black, 100), style=label.style_label_down, textcolor=masTopColor, size=size.small)
+
+        if market == -1
+            line.new(l1i, l1, l0i, l1, color=msbBottomColor, width=2)
+            label.new(int(math.avg(l1i, h0i)), l1, "MSB-", color=color.new(color.black, 100), style=label.style_label_up, textcolor=masBottomColor, size=size.small)
+ 
 
 ///////////////// ABC //////////////////
 
 groupABC = "ABC"
-prd = input.int(defval=8, title='ZigZag Period', minval=2, maxval=50, group=groupABC)
+prd = input.int(defval=9, title='ZigZag Period', minval=2, maxval=50, group=groupABC)
 fiboup = input.float(defval=0.618, title='Fibonacci Max', group=groupABC)
 fibodn = input.float(defval=0.382, title='Fibonacci Min', group=groupABC)
 
@@ -549,8 +674,8 @@ errorrate = input.float(defval=5.0, title='Error Rate', minval=0, maxval=30, gro
 showabc = input.bool(defval=true, title='Show ABC', group=groupABC)
 
 showzigzag = input.bool(defval=false, title='Show Zig Zag', group=groupABC, inline='zigzag')
-upcol = input.color(defval=color.lime, title='', group=groupABC, inline='zigzag')
-dncol = input.color(defval=color.red, title='', group=groupABC, inline='zigzag')
+upcol = input.color(defval=color.new(#15f505,0), title='', group=groupABC, inline='zigzag')
+dncol = input.color(defval=color.new(#f56105,0), title='', group=groupABC, inline='zigzag')
 
 showfib = input.bool(defval=false, title='Show Fibo', group=groupABC, inline='fib')
 fibColor = input.color(defval=color.blue, title='', group=groupABC, inline='fib')
@@ -658,8 +783,8 @@ if showzigzag and array.size(zigzag) > 5
     var line zzline2 = na
     line.delete(zzline1)
     line.delete(zzline2)
-    zzline1 := line.new(x1=math.round(array.get(zigzag, 1)), y1=array.get(zigzag, 0), x2=math.round(array.get(zigzag, 3)), y2=array.get(zigzag, 2), color=dir == 1 ? upcol : dncol, width=2, style=line.style_dashed)
-    zzline2 := line.new(x1=math.round(array.get(zigzag, 3)), y1=array.get(zigzag, 2), x2=math.round(array.get(zigzag, 5)), y2=array.get(zigzag, 4), color=dir == -1 ? upcol : dncol, width=2, style=line.style_dashed)
+    zzline1 := line.new(x1=math.round(array.get(zigzag, 1)), y1=array.get(zigzag, 0), x2=math.round(array.get(zigzag, 3)), y2=array.get(zigzag, 2), color=dir == 1 ? upcol : dncol, width=1, style=line.style_dashed)
+    zzline2 := line.new(x1=math.round(array.get(zigzag, 3)), y1=array.get(zigzag, 2), x2=math.round(array.get(zigzag, 5)), y2=array.get(zigzag, 4), color=dir == -1 ? upcol : dncol, width=1, style=line.style_dashed)
  
 if showfib and array.size(zigzag) > 5
        // min/max fibo levels
@@ -670,8 +795,8 @@ if showfib and array.size(zigzag) > 5
     var line fibo2 = na
     line.delete(fibo1)
     line.delete(fibo2)
-    fibo1 := line.new(x1=math.round(array.get(zigzag, 3)), y1=fmin, x2=math.round(array.get(zigzag, 3)) + 1, y2=fmin, color=fibColor, style=line.style_dashed, extend=extend.right)
-    fibo2 := line.new(x1=math.round(array.get(zigzag, 3)), y1=fmax, x2=math.round(array.get(zigzag, 3)) + 1, y2=fmax, color=fibColor, style=line.style_dashed, extend=extend.right)
+    fibo1 := line.new(x1=math.round(array.get(zigzag, 3)), y1=fmin, x2=math.round(array.get(zigzag, 3)) + 1, y2=fmin, color=fibColor, style=line.style_dashed, width=1, extend=extend.right)
+    fibo2 := line.new(x1=math.round(array.get(zigzag, 3)), y1=fmax, x2=math.round(array.get(zigzag, 3)) + 1, y2=fmax, color=fibColor, style=line.style_dashed, width=1, extend=extend.right)
     fibo2
     
 zchange = array.size(zigzag) > 0 ? array.get(zigzag, 0) : 0.0
@@ -750,8 +875,8 @@ lll_ = ta.lowest(abc_bar_count + 1)
 long = trend == 1 and abc_bar_count <= 6 and lbounced and lll_ >= last_zz_point
 short = trend == -1 and abc_bar_count <= 6 and sbounced and hhh_ <= last_zz_point
 
-plotshape(showABCSignal ? long : na, style=shape.triangleup, color=upcol, location=location.belowbar, size=size.small)
-plotshape(showABCSignal ? short : na, style=shape.triangledown, color=dncol, location=location.abovebar, size=size.small)
+plotshape(showABCSignal ? long : na, style=shape.triangleup, color=upcol, location=location.belowbar, size=size.tiny)
+plotshape(showABCSignal ? short : na, style=shape.triangledown, color=dncol, location=location.abovebar, size=size.tiny)
 
 
 ///////////////// Alert //////////////////
