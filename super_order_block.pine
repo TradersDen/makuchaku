@@ -1,6 +1,6 @@
 //@version=5
 //This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
-indicator('Super OrderBlock / FVG / BoS and ABC with Alert','Super OrderBlock 1.1.1', overlay=true, max_boxes_count=550, max_lines_count=500)
+indicator('Super OrderBlock / FVG / BoS and ABC with Alert','Super OrderBlock 1.1.8', overlay=true, max_boxes_count=550, max_lines_count=500,max_bars_back=500)
 
 plotOB = input.bool(defval=true, title='Plot OB', group='Order Blocks')
 obBullColor = input.color(defval=color.new(color.green, 90), title='Bullish OB Color', inline='Set Custom Color', group='Order Blocks')
@@ -52,9 +52,7 @@ bosBoxBorder = input.string(defval=line.style_dotted, title='BoS Box Border Styl
 bosBorderTransparency = input.int(defval=80, title='BoS Border Box Transparency', minval=0, maxval=100, group='Crossovers')
 bosMaxBoxSet = input.int(defval=10, title='Maximum BoS Box Displayed', minval=1, maxval=100, group='Crossovers', tooltip='Minimum = 1, Maximum = 100')
 
-plotHVB = input.bool(defval=true, title='Plot HVB', group='High Volume Bar', tooltip='A candle where the average volume is higher than last few bars.')
-hvbBullColor = input.color(defval=color.new(#127a02,0), title='Bullish HVB Color', inline='Set Custom Color', group='High Volume Bar')
-hvbBearColor = input.color(defval=color.new(#a6020a,0), title='Bearish HVB Color', inline='Set Custom Color', group='High Volume Bar')
+
 hvbEMAPeriod = input.int(defval=12, minval=1, title='Volume EMA Period', group='High Volume Bar')
 hvbMultiplier = input.float(defval=1.5, title='Volume Multiplier', minval=1, maxval=100, group='High Volume Bar')
 
@@ -363,79 +361,87 @@ if plotLiq
     _controlLine(_highLiqLines, high, low)
 
 
+//https://www.tradingview.com/script/zSDlR0YP-Higher-order-Orderblocks-Breakerblocks-Range-Alerts/
 
 
-//////////////////// Market Structure Break ////////////////////
+bool        pv2_sv          = input.bool        (false,                          title='Plot 2nd order pivots', group='MSB, Breaker, Range and S&D')
+bool        msb_sv          = input.bool        (true,                          title='Plot MSB lines', group='MSB, Breaker, Range and S&D')
+bool        box_sv          = input.bool        (false,                          title='Plot Supply Demand', group='MSB, Breaker, Range and S&D')
+bool        m_sv            = input.bool        (false,                          title='Plot Breakerblocks', group='MSB, Breaker, Range and S&D')
+bool        range_sv        = input.bool        (false,                          title='Plot Range', group='MSB, Breaker, Range and S&D')
+bool        range_eq_sv     = input.bool        (false,                          title='Plot Range 0.5 Line', group='MSB, Breaker, Range and S&D')
+bool        range_q_sv      = input.bool        (false,                          title='Plot Range 0.25 and 0.75 Lines', group='MSB, Breaker, Range and S&D')
+bool        log_sv          = input.bool        (true,                          title='Use Log Scale', group='MSB, Breaker, Range and S&D')
+bool        msb_a_sv        = input.bool        (true,                          title='Alert MSB', group='MSB, Breaker, Range and S&D')
+bool        ob_a_sv         = input.bool        (true,                          title='Alert Orderblock test', group='MSB, Breaker, Range and S&D')
+bool        bb_a_sv         = input.bool        (true,                          title='Alert Breakerblock test', group='MSB, Breaker, Range and S&D')
+bool        r_a_sv          = input.bool        (true,                          title='Alert New Range', group='MSB, Breaker, Range and S&D')
+bool        rt_a_sv         = input.bool        (true,                          title='Alert Range test', group='MSB, Breaker, Range and S&D')
 
 
-//Originated from https://www.tradingview.com/pine/?id=PUB%3B5482306601b045cd8df3d01ae0f72b0b 
-string      bos_type        = input.string      ("High and Low",    title='MSB trigger',                            options=["High and Low", "Close and Open"], group='MSB and S&D')
-//bool        pv2_sv          = input.bool        (false,              title='Display 2nd order pivots', group='MSB and S&D')
-bool        bos_sv          = input.bool        (true,              title='Highlight candles that broke structure', group='MSB and S&D')
-bool        msb_sv          = input.bool        (true,              title='Plot market structure broke lines', group='MSB and S&D')
-bool        box_sv          = input.bool        (false,              title='Plot supply-demand boxes', group='MSB and S&D')
-int         box_test_delay  = input.int         (3,                 title='Delay to count test of demand box', group='MSB and S&D')
-int         box_fill_delay  = input.int         (3,                 title='Delay to count fill of demand box', group='MSB and S&D')
-bool        box_test_sv     = input.bool        (true,              title='Dim tested demand boxes', group='MSB and S&D')
-bool        box_stop_sv     = input.bool        (true,              title='Stop plotting filled demand boxes', group='MSB and S&D')
-//bool        box_tested_sv     = input.bool        (false,           title='Show tested demand boxes', group='MSB and S&D')
+color       u_s             = input.color       (color.new(color.gray, 90),  title='Untested Supply Color', group='MSB, Breaker, Range and S&D')
+color       t_s             = input.color       (color.new(#f4e783 , 90),      title='Tested Supply Color', group='MSB, Breaker, Range and S&D')
+color       u_d             = input.color       (color.new(color.gray, 90),  title='Untested Demand Color', group='MSB, Breaker, Range and S&D')
+color       t_d             = input.color       (color.new(#22FF96 , 90),      title='Tested Demand Color', group='MSB, Breaker, Range and S&D')
 
+color       u_b             = input.color       (color.new(color.gray, 80) ,  title='Untested Breaker Color', group='MSB, Breaker, Range and S&D')
+color       t_b             = input.color       (color.new(color.blue, 90),     title='Tested Breaker Color', group='MSB, Breaker, Range and S&D')
 
-masSupplyColor = input.color(defval=color.new(color.red, 90), title='Supply Color', group='MSB and S&D')
-masDemandColor = input.color(defval=color.new(color.green, 90), title='Demand Color', group='MSB and S&D')
-masTestedSupplyColor = input.color(defval=color.new(#F9EBC8, 90), title='Tested Supply Color', group='MSB and S&D')
-masTestedDemandColor = input.color(defval=color.new(#A0BCC2, 90), title='Tested Demand Color', group='MSB and S&D')
+masTopColor = input.color(defval=color.aqua, title='Bullish MSB+ Color' , group='MSB, Breaker, Range and S&D')
+masBottomColor = input.color(defval=color.new(#fcb603,0), title='Bearish MSB- Color', group='MSB, Breaker, Range and S&D')
 
-masTopColor = input.color(defval=color.aqua, title='Bullish MSB+ Color' , group='MSB and S&D')
-masBottomColor = input.color(defval=color.orange, title='Bearish MSB- Color', group='MSB and S&D')
-masCandleColor = input.color(defval=color.fuchsia, title='MSB Candle Color', group='MSB and S&D')
-
-
-var float[] pvh1_price      = array.new_float   (1000, na)          // high
-var int[]   pvh1_time       = array.new_int     (1000, na)
-var float[] pvl1_price      = array.new_float   (1000, na)          // low
-var int[]   pvl1_time       = array.new_int     (1000, na)
-
-var float[] pvh2_price      = array.new_float   (1000, na)          // higher high
-var int[]   pvh2_time       = array.new_int     (1000, na)
-var float[] pvl2_price      = array.new_float   (1000, na)          // lower low
-var int[]   pvl2_time       = array.new_int     (1000, na)
-
+var float[] pvh1_price      = array.new_float   (30, na)            // high
+var int[]   pvh1_time       = array.new_int     (30, na)
+var float[] pvl1_price      = array.new_float   (30, na)            // low
+var int[]   pvl1_time       = array.new_int     (30, na)
+var float[] pvh2_price      = array.new_float   (10, na)            // higher high
+var int[]   pvh2_time       = array.new_int     (10, na)
+var float[] pvl2_price      = array.new_float   (10, na)            // lower low
+var int[]   pvl2_time       = array.new_int     (10, na)
 var float   htcmrll_price   = na                                    // high that created most recent ll
 var int     htcmrll_time    = na
 var float   ltcmrhh_price   = na                                    // low that created most recent hh
 var int     ltcmrhh_time    = na
-
-var box[]   long_boxes      = array.new_box()
+var box[]   long_boxes      = array.new_box()                       // orderblocks
 var box[]   short_boxes     = array.new_box()
-var box[]   oldlong_boxes   = array.new_box()
-var box[]   oldshort_boxes  = array.new_box()
-
-var line[]  bull_bos_lines  = array.new_line()
+var box[]   m_long_boxes    = array.new_box()                       // breakerblocks
+var box[]   m_short_boxes   = array.new_box()
+var line[]  bull_bos_lines  = array.new_line()                      // MSB lines
 var line[]  bear_bos_lines  = array.new_line()
-
-var label[] la_ph2          = array.new_label   (1000, na)
-var label[] la_pl2          = array.new_label   (1000, na)
-
+var line[]  range_h_lines   = array.new_line()                      // Range lines
+var line[]  range_25_lines  = array.new_line()
+var line[]  range_m_lines   = array.new_line()
+var line[]  range_75_lines  = array.new_line()
+var line[]  range_l_lines   = array.new_line()
+var label[] la_ph2          = array.new_label()                     // 2nd order pivots
+var label[] la_pl2          = array.new_label()
 var float   temp_pv_0       = na
 var float   temp_pv_1       = na
 var float   temp_pv_2       = na
-
+var int     temp_time       = na
+var float   last_range_h    = na
+var float   last_range_l    = na
+var line    range_m         = na
+var line    range_25        = na
+var line    range_75        = na
+var float   box_top         = na
+var float   box_bottom      = na
+var int     h_a_time        = 0
+var int     l_a_time        = 0
+var int     mh_a_time       = 0
+var int     ml_a_time       = 0
+var int     rh_a_time       = 0
+var int     rl_a_time       = 0
 bool        pvh             = high < high[1] and high[1] > high[2]
 bool        pvl             = low > low[1] and low[1] < low[2]
-
 int         pv1_time        = bar_index[1]
 float       pv1_high        = high[1]
 float       pv1_low         = low[1]
-float       trigger_high    = bos_type=="High and Low" ? high : math.max(open, close)
-float       trigger_low     = bos_type=="High and Low" ? low : math.min(open, close)
-
-bool        bos_candle      = false
 bool        new_ph_2nd      = false
 bool        new_pl_2nd      = false
+string      alert           = na
 
 if barstate.isconfirmed
-
     if pvh
         array.pop(pvh1_price)
         array.pop(pvh1_time)
@@ -445,20 +451,28 @@ if barstate.isconfirmed
             temp_pv_0 := array.get(pvh1_price, 0)
             temp_pv_1 := array.get(pvh1_price, 1)
             temp_pv_2 := array.get(pvh1_price, 2)
-            if temp_pv_0 > temp_pv_1
-                for i = 0 to array.size(pvl1_time) - 1 by 1
-                    temp_ltcmrhh_time = array.get(pvl1_time, i)
-                    if temp_ltcmrhh_time < array.get(pvh1_time, 0)
-                        ltcmrhh_price := array.get(pvl1_price, i)
-                        ltcmrhh_time := temp_ltcmrhh_time
-                        break
             if temp_pv_0 < temp_pv_1 and temp_pv_1 > temp_pv_2
                 array.pop(pvh2_price)
                 array.pop(pvh2_time)
                 array.unshift(pvh2_price, temp_pv_1)
                 array.unshift(pvh2_time, array.get(pvh1_time, 1))
                 new_ph_2nd := true
-
+                if temp_pv_1 > array.get(pvh2_price, 1)
+                    for i = 0 to array.size(pvl2_time) - 1 by 1
+                        temp_ltcmrhh_time = array.get(pvl2_time, i)
+                        if temp_ltcmrhh_time < array.get(pvh2_time, 0)
+                            ltcmrhh_price := array.get(pvl2_price, i)
+                            ltcmrhh_time := temp_ltcmrhh_time
+                            break
+            if temp_pv_0 < ltcmrhh_price
+                if msb_sv
+                    array.push(bear_bos_lines, line.new(x1=ltcmrhh_time, y1=ltcmrhh_price, x2=bar_index, y2=ltcmrhh_price, color=masBottomColor, width=2))
+                box_top := array.get(pvh2_price, 0)
+                box_bottom := math.max(low[bar_index - array.get(pvh2_time, 0)], low[bar_index - array.get(pvh2_time, 0) + 1])
+                array.push(short_boxes, box.new(left=array.get(pvh2_time, 0), top=box_top, right=bar_index, bottom=box_bottom, bgcolor= box_sv ? u_s : na , border_color=na, extend=extend.right))
+                if msb_a_sv
+                    alert := alert + 'Bearish MSB @ ' + str.tostring(ltcmrhh_price) + '\n' + 'New Supply Zone : '+ str.tostring(box_top) + ' - ' + str.tostring(box_bottom) + '\n'
+                ltcmrhh_price := na
     if pvl
         array.pop(pvl1_price)
         array.pop(pvl1_time)
@@ -468,95 +482,181 @@ if barstate.isconfirmed
             temp_pv_0 := array.get(pvl1_price, 0)
             temp_pv_1 := array.get(pvl1_price, 1)
             temp_pv_2 := array.get(pvl1_price, 2)
-            if temp_pv_0 < temp_pv_1
-                for i = 0 to array.size(pvh1_time) - 1 by 1
-                    temp_htcmrll_time = array.get(pvh1_time, i)
-                    if temp_htcmrll_time < array.get(pvl1_time, 0)
-                        htcmrll_price := array.get(pvh1_price, i)
-                        htcmrll_time := temp_htcmrll_time
-                        break
             if temp_pv_0 > temp_pv_1 and temp_pv_1 < temp_pv_2
                 array.pop(pvl2_price)
                 array.pop(pvl2_time)
                 array.unshift(pvl2_price, temp_pv_1)
                 array.unshift(pvl2_time, array.get(pvl1_time, 1))
                 new_pl_2nd := true
-
-    if trigger_high > htcmrll_price
-        if msb_sv
-            array.push(bull_bos_lines, line.new(x1=htcmrll_time, y1=htcmrll_price, x2=bar_index, y2=htcmrll_price, color=masTopColor, width=2))
-        if box_sv
-            array.push(long_boxes, box.new(left=array.get(pvl1_time, 0), top=math.min(high[bar_index - array.get(pvl1_time, 0)], high[bar_index - array.get(pvl1_time, 0) + 1]), right=bar_index, bottom=array.get(pvl1_price, 0), bgcolor=masDemandColor, border_color=masDemandColor, extend=extend.right))
-        bos_candle := true
-        htcmrll_price := na
-        htcmrll_price
-
-    if trigger_low < ltcmrhh_price
-        if msb_sv
-            array.push(bear_bos_lines, line.new(x1=ltcmrhh_time, y1=ltcmrhh_price, x2=bar_index, y2=ltcmrhh_price, color= masBottomColor, width=2))
-        if box_sv
-            array.push(short_boxes, box.new(left=array.get(pvh1_time, 0), top=array.get(pvh1_price, 0), right=bar_index, bottom=math.max(low[bar_index - array.get(pvh1_time, 0)], low[bar_index - array.get(pvh1_time, 0) + 1]), bgcolor=masSupplyColor, border_color= masSupplyColor, extend=extend.right))
-        bos_candle := true
-        ltcmrhh_price := na
-        ltcmrhh_price
-
+                if temp_pv_1 < array.get(pvl2_price, 1)
+                    for i = 0 to array.size(pvh2_time) - 1 by 1
+                        temp_htcmrll_time = array.get(pvh2_time, i)
+                        if temp_htcmrll_time < array.get(pvl2_time, 0)
+                            htcmrll_price := array.get(pvh2_price, i)
+                            htcmrll_time := temp_htcmrll_time
+                            break
+            if temp_pv_0 > htcmrll_price
+                if msb_sv
+                    array.push(bull_bos_lines, line.new(x1=htcmrll_time, y1=htcmrll_price, x2=bar_index, y2=htcmrll_price, color=masTopColor, width=2))
+                box_top := math.min(high[bar_index - array.get(pvl2_time, 0)], high[bar_index - array.get(pvl2_time, 0) + 1])
+                box_bottom := array.get(pvl2_price, 0)
+                array.push(long_boxes, box.new(left=array.get(pvl2_time, 0), top=box_top, right=bar_index, bottom=box_bottom, bgcolor= box_sv ? u_d : na, border_color=na, extend=extend.right))
+                if msb_a_sv
+                    alert := alert + 'Bullish MSB @ ' + str.tostring(htcmrll_price) + '\n' + 'New Demand Zone : '+ str.tostring(box_bottom) + ' - ' + str.tostring(box_top) + '\n'
+                htcmrll_price := na
     if array.size(short_boxes) > 0
         for i = array.size(short_boxes) - 1 to 0 by 1
             tbox = array.get(short_boxes, i)
-            _top = box.get_top(tbox)
-            _bottom = box.get_bottom(tbox)
-            if trigger_high > _bottom and box.get_left(tbox) + box_test_delay < bar_index and box_test_sv
-                box.set_bgcolor(tbox, masTestedSupplyColor)
-                box.set_border_color(tbox, masTestedSupplyColor)
-            if trigger_high > _top and box.get_left(tbox) + box_fill_delay < bar_index
-                if box_stop_sv
-                    box.set_right(tbox, bar_index)
-                    box.set_extend(tbox, extend.none)
-                    array.unshift(oldshort_boxes, tbox)
-                    array.remove(short_boxes, i)
-
+            topMSB = box.get_top(tbox)
+            bottomMSB = box.get_bottom(tbox)
+            ago = box.get_left(tbox)
+            if array.get(pvh1_price, 0) > bottomMSB 
+                if box_sv
+                    box.set_bgcolor(tbox, t_s)    
+                if ob_a_sv and close < bottomMSB
+                    if array.get(pvh1_time, 0) != h_a_time
+                        h_a_time := array.get(pvh1_time, 0)
+                        alert := alert + 'Supply Zone Test @ ' + str.tostring(array.get(pvh1_price, 0)) + ' (age = ' + str.tostring(bar_index-ago) + ' bars) \n'
+            if array.get(pvl1_price, 0) > topMSB
+                if m_sv
+                    box.set_bgcolor(tbox, u_b)
+                    array.push(m_long_boxes, tbox)
+                else
+                    box.delete(tbox)
+                array.remove(short_boxes, i)
+                if msb_sv    
+                    line.delete(array.get(bear_bos_lines, i))
+                    array.remove(bear_bos_lines, i)
     if array.size(long_boxes) > 0
         for i = array.size(long_boxes) - 1 to 0 by 1
             lbox = array.get(long_boxes, i)
-            _top = box.get_top(lbox)
-            _bottom = box.get_bottom(lbox)
-            if trigger_low < _top and box.get_left(lbox) + box_test_delay < bar_index and box_test_sv
-                box.set_bgcolor(lbox, masTestedDemandColor)
-                box.set_border_color(lbox, masTestedDemandColor)
-            if trigger_low < _bottom and box.get_left(lbox) + box_fill_delay < bar_index
-                if box_stop_sv
-                    box.set_right(lbox, bar_index)
-                    box.set_extend(lbox, extend.none)
-                    array.unshift(oldlong_boxes, lbox)
-                    array.remove(long_boxes, i)
-    // if pv2_sv
-    //     if new_ph_2nd
-    //         array.pop(la_ph2)
-    //         array.unshift(la_ph2, label.new(x = array.get(pvh2_time, 0), y = array.get(pvh2_price, 0), xloc = xloc.bar_index, style = label.style_label_down,    color = #770000FF, size = size.tiny))
-    //     if new_pl_2nd
-    //         array.pop(la_pl2)
-    //         array.unshift(la_pl2, label.new(x = array.get(pvl2_time, 0), y = array.get(pvl2_price, 0), xloc = xloc.bar_index, style = label.style_label_up,      color = #007700FF, size = size.tiny))
+            topMSB = box.get_top(lbox)
+            bottomMSB = box.get_bottom(lbox)
+            ago = box.get_left(lbox)
+            if array.get(pvl1_price, 0) < topMSB
+                if box_sv
+                    box.set_bgcolor(lbox, t_d)
+                if ob_a_sv and close > topMSB
+                    if array.get(pvl1_time, 0) != l_a_time
+                        l_a_time := array.get(pvl1_time, 0)
+                        alert := alert + 'Demand Zone Test @ ' + str.tostring(array.get(pvl1_price, 0)) + ' (age = ' + str.tostring(bar_index-ago) + ' bars) \n'
+            if array.get(pvh1_price, 0) < bottomMSB
+                if m_sv
+                    box.set_bgcolor(lbox, u_b)
+                    array.push(m_short_boxes, lbox)
+                else
+                    box.delete(lbox)
+                array.remove(long_boxes, i)
+                if msb_sv
+                    line.delete(array.get(bull_bos_lines, i))
+                    array.remove(bull_bos_lines, i)
+    if array.size(m_short_boxes) > 0
+        for i = array.size(m_short_boxes) - 1 to 0 by 1
+            tbox = array.get(m_short_boxes, i)
+            topMSB = box.get_top(tbox)
+            bottomMSB = box.get_bottom(tbox)
+            ago = box.get_left(tbox)
+            if array.get(pvh1_price, 0) > bottomMSB 
+                box.set_bgcolor(tbox, t_b)
+                if bb_a_sv and close < bottomMSB
+                    if array.get(pvh1_time, 0) != mh_a_time
+                        mh_a_time := array.get(pvh1_time, 0)
+                        alert := alert + 'Breakerblock Test Up @ ' + str.tostring(array.get(pvh1_price, 0)) + ' (age = ' + str.tostring(bar_index-ago) + ' bars) \n'
+            if array.get(pvl1_price, 0) > topMSB
+                box.delete(tbox)
+                array.remove(m_short_boxes, i)
+    if array.size(m_long_boxes) > 0
+        for i = array.size(m_long_boxes) - 1 to 0 by 1
+            lbox = array.get(m_long_boxes, i)
+            topMSB = box.get_top(lbox)
+            bottomMSB = box.get_bottom(lbox)
+            ago = box.get_left(lbox)
+            if array.get(pvl1_price, 0) < topMSB
+                box.set_bgcolor(lbox, t_b)
+                if bb_a_sv and close > topMSB
+                    if array.get(pvl1_time, 0) != ml_a_time
+                        ml_a_time := array.get(pvl1_time, 0)
+                        alert := alert + 'Breakerblock Test Down @ ' + str.tostring(array.get(pvl1_price, 0)) + ' (age = ' + str.tostring(bar_index-ago) + ' bars) \n'
+            if array.get(pvh1_price, 0) < bottomMSB
+                box.delete(lbox)
+                array.remove(m_long_boxes, i)
+    if range_sv and (new_ph_2nd or new_pl_2nd) and (array.get(pvh2_price, 0) < array.get(pvh2_price, 1) and array.get(pvl2_price, 0) > array.get(pvl2_price, 1) and array.get(pvh2_price, 0) > array.get(pvl2_price, 1) and array.get(pvl2_price, 0) < array.get(pvh2_price, 1)) and (array.get(pvl2_price, 1) > nz(last_range_h) or na(last_range_l)? true : (array.get(pvh2_price, 1) < last_range_l))
+        temp_time := math.min(array.get(pvh2_time, 1), array.get(pvl2_time, 1))
+        last_range_h    := array.get(pvh2_price, 1)
+        last_range_l    := array.get(pvl2_price, 1)
+        temp_pv_0 := log_sv ? math.exp((math.log(last_range_h) + math.log(last_range_l))/2) : (last_range_h + last_range_l)/2
+        temp_pv_1 := log_sv ? math.exp((math.log(last_range_h) + math.log(temp_pv_0))/2) : (last_range_h + temp_pv_0)/2
+        temp_pv_2 := log_sv ? math.exp((math.log(last_range_l) + math.log(temp_pv_0))/2) : (last_range_l + temp_pv_0)/2
+        array.push(range_h_lines, line.new(x1=temp_time, y1=last_range_h, x2=bar_index, y2=last_range_h, color=color.yellow, width=1, extend=extend.right))
+        array.push(range_l_lines, line.new(x1=temp_time, y1=last_range_l, x2=bar_index, y2=last_range_l, color=color.yellow, width=1, extend=extend.right))
+        if range_eq_sv
+            array.push(range_m_lines, line.new(x1=temp_time, y1=temp_pv_0, x2=bar_index, y2=temp_pv_0, color=color.yellow, width=1, extend=extend.right))
+        if range_q_sv
+            array.push(range_25_lines, line.new(x1=temp_time, y1=temp_pv_1, x2=bar_index, y2=temp_pv_1, style=line.style_dashed, color=color.yellow, width=1, extend=extend.right))
+            array.push(range_75_lines, line.new(x1=temp_time, y1=temp_pv_2, x2=bar_index, y2=temp_pv_2, style=line.style_dashed, color=color.yellow, width=1, extend=extend.right))
+        if r_a_sv
+            alert := alert + 'New Range : ' + str.tostring(last_range_h) + ' - ' +  str.tostring(last_range_l) + '. Mean = ' +  str.tostring(temp_pv_0) + '\n'
+    if array.size(range_h_lines) > 0
+        for i = array.size(range_h_lines) - 1 to 0 by 1
+            range_h = array.get(range_h_lines, i)
+            topMSB = line.get_y1(range_h)
+            range_l = array.get(range_l_lines, i)
+            bottomMSB = line.get_y1(range_l)
+            temp_time := line.get_x1(range_h)
+            if array.get(pvh1_price, 0) > topMSB
+                if rt_a_sv and close < topMSB
+                    if array.get(pvh1_time, 0) != rh_a_time
+                        rh_a_time := array.get(pvh1_time, 0)
+                        alert := alert + 'Range High Test @ ' + str.tostring(array.get(pvh1_price, 0)) + ' \n'
+            if array.get(pvl1_price, 0) < bottomMSB
+                if rt_a_sv and close > bottomMSB
+                    if array.get(pvl1_time, 0) != rl_a_time
+                        rl_a_time := array.get(pvl1_time, 0)
+                        alert := alert + 'Range Low Test @ ' + str.tostring(array.get(pvl1_price, 0)) + ' \n'
+            if range_eq_sv
+                range_m := array.get(range_m_lines, i)
+            if range_q_sv
+                range_25 := array.get(range_25_lines, i)
+                range_75 := array.get(range_75_lines, i)
+            if array.get(pvh1_price, 0) < bottomMSB or array.get(pvl1_price, 0) > topMSB
+                line.delete(range_h)
+                array.remove(range_h_lines, i)
+                line.delete(range_l)
+                array.remove(range_l_lines, i)
+                if range_eq_sv
+                    line.delete(range_m)                
+                    array.remove(range_m_lines, i)
+                if range_q_sv
+                    line.delete(range_25)                
+                    array.remove(range_25_lines, i)
+                    line.delete(range_75)                
+                    array.remove(range_75_lines, i)
+                last_range_h    := na
+                last_range_l    := na
+    if pv2_sv
+        if new_ph_2nd
+            array.push(la_ph2, label.new(x = array.get(pvh2_time, 0), y = array.get(pvh2_price, 0), xloc = xloc.bar_index, style = label.style_label_down,    color = #770000FF, size = size.tiny))
+        if new_pl_2nd
+            array.push(la_pl2, label.new(x = array.get(pvl2_time, 0), y = array.get(pvl2_price, 0), xloc = xloc.bar_index, style = label.style_label_up,      color = #007700FF, size = size.tiny))
 
-
-barcolor((bos_candle and isUp(0) and bos_sv) ? masTopColor : ((plotHVB and isUp(0) and isHighVolume) ? hvbBullColor : na))
-barcolor((bos_candle and isDown(0) and bos_sv) ? masBottomColor : ((plotHVB and isDown(0) and isHighVolume) ? hvbBearColor : na))
-
-
-// barcolor(bos_candle and bos_sv ? masCandleColor : ((plotHVB and isUp(0) and isHighVolume) ? hvbBullColor : na))
-// barcolor(bos_candle and bos_sv ? masCandleColor : ((plotHVB and isDown(0) and isHighVolume) ? hvbBearColor : na))
-
+alert := not na(alert) ? (alert + 'Current price = ' + str.tostring(close) + '\n') : na
+exec = not na(alert) ? true : false
+if exec==true 
+    alert(alert, alert.freq_once_per_bar_close)
 
 
 //////////////////// Market Structure Break & Order Block by EmreKb ////////////////////
 
 //https://www.tradingview.com/script/DkE7UniD/
+//https://www.tradingview.com/v/SQRSlcup/
 zigzag_len = input.int(9, "ZigZag Length", group='Market Structure Break')
 show_zigzag = input.bool(false, "Show Zigzag", group='Market Structure Break')
-show_msb = input.bool(true, "Show MSB", group='Market Structure Break')
+show_msb = input.bool(true, "Show Strong MSB", group='Market Structure Break')
 fib_factor = input.float(0.33, "Fib Factor for breakout confirmation", 0, 1, 0.01, group='Market Structure Break')
+show_qsd = input.bool(false, "Show Quasimodo", group='Market Structure Break')
 
-msbTopColor = input.color(defval=color.teal, title='MSB Top Color', group='Market Structure Break')
-msbBottomColor = input.color(defval=color.orange, title='MSB Bottom Color', group='Market Structure Break')
+msbTopColor = input.color(defval=color.new(#2df705,0), title='Strong MSB Top Color', group='Market Structure Break')
+msbBottomColor = input.color(defval=color.new(#db05f7,0), title='Strong MSB Bottom Color', group='Market Structure Break')
 
 var float[] high_points_arr = array.new_float(5)
 var int[] high_index_arr = array.new_int(5)
@@ -601,6 +701,10 @@ f_get_low(ind) =>
 
 [l0, l0i] = f_get_low(0)
 [l1, l1i] = f_get_low(1)
+
+
+[h2, h2i] = f_get_high(2)
+[l2, l2i] = f_get_low(2)
 
 if ta.change(trendMSB) != 0 and show_zigzag
     if trendMSB == 1
@@ -656,14 +760,37 @@ if show_msb
     if ta.change(market) != 0
         if market == 1
             line.new(h1i, h1, h0i, h1, color=msbTopColor, width=2)
-            label.new(int(math.avg(h1i, l0i)), h1, "MSB+", color=color.new(color.black, 100), style=label.style_label_down, textcolor=masTopColor, size=size.small)
+            label.new(int(math.avg(h1i, l0i)), h1, "MSB+", color=color.new(color.black, 100), style=label.style_label_down, textcolor=msbTopColor, size=size.small)
 
         if market == -1
             line.new(l1i, l1, l0i, l1, color=msbBottomColor, width=2)
-            label.new(int(math.avg(l1i, h0i)), l1, "MSB-", color=color.new(color.black, 100), style=label.style_label_up, textcolor=masBottomColor, size=size.small)
- 
+            label.new(int(math.avg(l1i, h0i)), l1, "MSB-", color=color.new(color.black, 100), style=label.style_label_up, textcolor=msbBottomColor, size=size.small)
+
+bu_cond = trendMSB == -1 and h2 > h1 and l1 > l0 and h0 > h1 and close > l1
+be_cond = trendMSB == 1 and l2 < l1 and h1 < h0 and l0 < l1 and close < h1
+
+if show_qsd
+    if bu_cond and not bu_cond[1]
+        line.new(h2i, h2, l1i, l1, color=color.green, width=1)
+        line.new(l1i, l1, h1i, h1, color=color.green, width=1)
+        line.new(h1i, h1, l0i, l0, color=color.green, width=1)
+        line.new(l0i, l0, h0i, h0, color=color.green, width=1)
+        line.new(l1i, l1, bar_index, l1, color=color.green, width=1)
+        label.new(bar_index, l1, "QM!", style=label.style_label_up, textcolor=color.white, color=color.green, size=size.tiny)
+        //alert("Bullish QM!", alert.freq_once_per_bar)
+
+    if be_cond and not be_cond[1]
+        line.new(l2i, l2, h1i, h1, color=color.red, width=1)
+        line.new(h1i, h1, l1i, l1, color=color.red, width=1)
+        line.new(l1i, l1, h0i, h0, color=color.red, width=1)
+        line.new(h0i, h0, l0i, l0, color=color.red, width=1)
+        line.new(h1i, h1, bar_index, h1, color=color.red, width=1)
+        label.new(bar_index, h1, "QM!", style=label.style_label_down, textcolor=color.white, color=color.red, size=size.tiny)
+        //alert("Bearish QM!", alert.freq_once_per_bar)
+
 
 ///////////////// ABC //////////////////
+//https://www.tradingview.com/v/0SBnTaqJ/
 
 groupABC = "ABC"
 prd = input.int(defval=9, title='ZigZag Period', minval=2, maxval=50, group=groupABC)
@@ -674,15 +801,15 @@ errorrate = input.float(defval=5.0, title='Error Rate', minval=0, maxval=30, gro
 showabc = input.bool(defval=true, title='Show ABC', group=groupABC)
 
 showzigzag = input.bool(defval=false, title='Show Zig Zag', group=groupABC, inline='zigzag')
-upcol = input.color(defval=color.new(#15f505,0), title='', group=groupABC, inline='zigzag')
-dncol = input.color(defval=color.new(#f56105,0), title='', group=groupABC, inline='zigzag')
+upcol = input.color(defval=color.new(#05f5f5,0), title='', group=groupABC, inline='zigzag')
+dncol = input.color(defval=color.new(#f58d05,0), title='', group=groupABC, inline='zigzag')
 
 showfib = input.bool(defval=false, title='Show Fibo', group=groupABC, inline='fib')
 fibColor = input.color(defval=color.blue, title='', group=groupABC, inline='fib')
 
 showABCSignal = input.bool(defval=false, title='Show ABC Signal', group=groupABC)
 
-showcloud = input.bool(defval=false, title='Show Cloud', group=groupABC, inline='cloud')
+//showcloud = input.bool(defval=false, title='Show Cloud', group=groupABC, inline='cloud')
 c_upcol = input.color(defval=color.new(color.lime, 75), title='', group=groupABC, inline='cloud')
 c_dncol = input.color(defval=color.new(color.red, 75), title='', group=groupABC, inline='cloud')
 srcma = input.source(defval=close, title='Source for Moving Averages', group=groupABC)
@@ -733,11 +860,11 @@ for x = 1 to 6 by 1
 var int trend = 0
 trend := lower > 0 and upper == 0 and lower[1] > 0 and upper[1] == 0 ? 1 : lower == 0 and upper > 0 and lower[1] == 0 and upper[1] > 0 ? -1 : trend
 
-tucolor = trend == 1 ? c_upcol : na
-tdcolor = trend == -1 ? c_dncol : na
+//tucolor = trend == 1 ? c_upcol : na
+//tdcolor = trend == -1 ? c_dncol : na
 
-fill(plot(umax, color=na), plot(umin, color=na), color=showcloud ? tdcolor : na, transp=90)
-fill(plot(lmax, color=na), plot(lmin, color=na), color=showcloud ? tucolor : na, transp=90)
+//fill(plot(umax, color=na), plot(umin, color=na), color=showcloud ? tdcolor : na, transp=90)
+//fill(plot(lmax, color=na), plot(lmin, color=na), color=showcloud ? tucolor : na, transp=90)
 
 //===================================================================
 
@@ -815,9 +942,9 @@ if ta.change(zchange) and array.size(zigzag) > 5 and (pl and trend == 1 and dir 
         array.push(abc, c_loc)
 
 draw_line(dir, x1_, y1_, x2_, y2_, x3_, y3_) =>
-    l1 = line.new(x1=x1_, y1=y1_, x2=x2_, y2=y2_, color=dir == 1 ? upcol : dncol, width=1)
-    l2 = line.new(x1=x2_, y1=y2_, x2=x3_, y2=y3_, color=dir == 1 ? dncol : upcol, width=1)
-    [l1, l2]
+    l1M = line.new(x1=x1_, y1=y1_, x2=x2_, y2=y2_, color=dir == 1 ? upcol : dncol, width=1)
+    l2M = line.new(x1=x2_, y1=y2_, x2=x3_, y2=y3_, color=dir == 1 ? dncol : upcol, width=1)
+    [l1M, l2M]
 
 draw_label(dir, x1_, y1_, x2_, y2_, x3_, y3_) =>
     alabel = label.new(x=x1_, y=y1_, text='C', style=dir == 1 ? label.style_label_down : label.style_label_up, color=color.new(color.white, 100), textcolor=color.blue)
@@ -879,6 +1006,76 @@ plotshape(showABCSignal ? long : na, style=shape.triangleup, color=upcol, locati
 plotshape(showABCSignal ? short : na, style=shape.triangledown, color=dncol, location=location.abovebar, size=size.tiny)
 
 
+///////////////// Polarity-Divergences //////////////////
+
+//https://www.tradingview.com/script/84Sr3GS4-Polarity-Divergences/
+
+// Polarity Divergences
+// v2, 2022.07.30
+
+plotColoredCandles  = input.bool(true, "Plot high volume or polarity divergence bar", group= "Candle Color",tooltip='It looks at the polarity of the intrabars composing a chart bar and fills chart candles orange when a majority of intrabars does not have the same polarity as that of the chart bar')
+plotHVB = input.bool(defval=true, title='Plot High Volume Bar', tooltip='A candle where the average volume is higher than last few bars.', group= "Candle Color")
+
+hvbPolarBullColor = input.color(defval=color.new(#72f705,0), title='Bullish High Volume with Polarity Divergences', group = "Candle Color", tooltip= 'It is green, there was polarity divergence and a high volume bar')
+hvbPolarBearColor = input.color(defval=color.new(#f705cb,0), title='Bearish High Volume with Polarity Divergences',  group = "Candle Color", tooltip= 'It is red, there was polarity divergence and a high volume bar')
+polarColor = input.color(defval=color.new(#f7c705,0), title='Bullish/Bearish Polarity Divergences without High Volume',  group = "Candle Color", tooltip= 'There was polarity divergence and but it is not a high volume bar')
+
+hvbBullColor = input.color(defval=color.new(#127a02,0), title='Bullish High Volume without Polarity Divergences', group = "Candle Color", tooltip= 'It is green and it is a high volume bar')
+hvbBearColor = input.color(defval=color.new(#a6020a,0), title='Bullish High Volume without Polarity Divergences', group = "Candle Color", tooltip= 'It is red and it is a high volume bar')
+
+
+// @function    Selects a LTF from the chart's TF.
+// @returns     (simple string) A timeframe string.
+ltfStep() =>
+    int MS_IN_DAY = 1000 * 60 * 60 * 24
+    int tfInMs    = timeframe.in_seconds() * 1000
+    string result =
+      switch
+        tfInMs < MS_IN_DAY      => "1"
+        tfInMs < MS_IN_DAY * 7  => "30"
+        => "D"
+
+
+
+    
+// Calculate the polarity of the chart bar. 
+float chartBarPolarity = math.sign(close - open)
+// Fetch an array containing the +1/0/-1 polarity of each intrabar.
+float[] polaritiesArray = request.security_lower_tf(syminfo.tickerid, ltfStep(), chartBarPolarity)
+// Calculate the average polarity of intrabars.
+float intrabarPolarity = math.sign(array.sum(polaritiesArray))
+
+color barColor = na 
+
+// Candle Color Lime means It is green, there was polarity divergence and a high volume bar
+// Candle Color purple means It is red, there was polarity divergence and a high volume bar
+// Candle Color orange means There was polarity divergence and but it is not a high volume bar
+
+// Candle Color Deep Green means It is green and it is a high volume bar
+// Candle Color Deep Red means It is red and it is a high volume bar
+
+
+isUp0 = isUp(0)
+isDown0 = isDown(0)
+
+if (intrabarPolarity != chartBarPolarity) 
+    if (plotHVB and isUp0 and isHighVolume)
+        barColor := hvbPolarBullColor
+    else if (plotHVB and isDown0 and isHighVolume)
+        barColor := hvbPolarBearColor
+    else 
+        barColor := polarColor
+else 
+    if (plotHVB and isUp0 and isHighVolume)
+        barColor := hvbBullColor
+    else if (plotHVB and isDown0 and isHighVolume)
+        barColor := hvbBearColor
+    else 
+        barColor := na 
+         
+// Color the chart bar orange when the majority of intrabar polarities does not match that of the chart bar.
+barcolor(plotColoredCandles ? barColor : na)
+
 ///////////////// Alert //////////////////
 
 // Any direction combined
@@ -900,16 +1097,15 @@ alertcondition(bullRJB, title="12 Bullish RJB+", message="Bullish RJB+")
 alertcondition(long, title='13 ABC Long', message='ABC Long')
 
 
-
 //Bearish
-alertcondition((isFvgDown(0) and isObDown(1)) or isFvgDown(0) or isObDown(0) or premiumPremium or premiumPremium1 or bearStructureBreakingFVG or bearBOS or bearRJB, title="13 Any Bearish", message="Bearish OB+FVG Stack or Bearish PPDD OB or BOS- or FVG- Structure or RJB- or OB- or FGP-")
-alertcondition((isFvgDown(0) and isObDown(1)) or premiumPremium or premiumPremium1 or bearStructureBreakingFVG or bearBOS or bearRJB, title="14 Any Strong/Weak Bearish", message="Bearish OB+FVG Stack or Bearish PPDD OB or BOS- or FVG- Structure or RJB-")
-alertcondition(isFvgDown(0) and isObDown(1), title="15 Bearish OB+FVG Stack", message="Bearish OB+FVG Stack")
-alertcondition(bearStructureBreakingFVG, title="16 Bearish FVG Structure Breaking", message="Bearish FVG Structure Breaking")
-alertcondition(premiumPremium, title="17 Strong Bearish PPDD OB ", message="Strong Bearish PPDD OB")
-alertcondition(premiumPremium1, title="18 Weak Bearish PPDD OB ", message="Weak Bearish PPDD OB")
-alertcondition(bearBOS, title="19 Bearish BOS-", message="Bearish BOS-")
-alertcondition(isFvgDown(0), title="20 Bearish FVG", message="Bearish FVG")
-alertcondition(isObDown(0), title="21 Bearish OB", message="Bearish OB")
-alertcondition(bearRJB, title="22 Bearish RJB+", message="Bearish RJB-")
-alertcondition(short, title='23 ABC Short', message='ABC Short')
+alertcondition((isFvgDown(0) and isObDown(1)) or isFvgDown(0) or isObDown(0) or premiumPremium or premiumPremium1 or bearStructureBreakingFVG or bearBOS or bearRJB, title="14 Any Bearish", message="Bearish OB+FVG Stack or Bearish PPDD OB or BOS- or FVG- Structure or RJB- or OB- or FGP-")
+alertcondition((isFvgDown(0) and isObDown(1)) or premiumPremium or premiumPremium1 or bearStructureBreakingFVG or bearBOS or bearRJB, title="15 Any Strong/Weak Bearish", message="Bearish OB+FVG Stack or Bearish PPDD OB or BOS- or FVG- Structure or RJB-")
+alertcondition(isFvgDown(0) and isObDown(1), title="16 Bearish OB+FVG Stack", message="Bearish OB+FVG Stack")
+alertcondition(bearStructureBreakingFVG, title="17 Bearish FVG Structure Breaking", message="Bearish FVG Structure Breaking")
+alertcondition(premiumPremium, title="18 Strong Bearish PPDD OB ", message="Strong Bearish PPDD OB")
+alertcondition(premiumPremium1, title="19 Weak Bearish PPDD OB ", message="Weak Bearish PPDD OB")
+alertcondition(bearBOS, title="20 Bearish BOS-", message="Bearish BOS-")
+alertcondition(isFvgDown(0), title="21 Bearish FVG", message="Bearish FVG")
+alertcondition(isObDown(0), title="22 Bearish OB", message="Bearish OB")
+alertcondition(bearRJB, title="23 Bearish RJB+", message="Bearish RJB-")
+alertcondition(short, title='24 ABC Short', message='ABC Short')
