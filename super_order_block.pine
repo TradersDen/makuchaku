@@ -1,8 +1,18 @@
 //@version=5
 //This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
-indicator('Super OrderBlock / FVG / BoS and ABC with Alert','Super OrderBlock 1.1.8', overlay=true, max_boxes_count=550, max_lines_count=500,max_bars_back=500)
+indicator('Super OrderBlock / FVG / BoS and ABC with Alert','Super OrderBlock 1.1.9', overlay=true, max_boxes_count=550, max_lines_count=500,max_bars_back=500)
 
-plotOB = input.bool(defval=true, title='Plot OB', group='Order Blocks')
+groupQuickAccess = 'Quick Access'
+
+plotOB = input.bool(defval=true, title='Plot OB', group=groupQuickAccess, inline=groupQuickAccess)
+plotFVG = input.bool(defval=true, title='Plot FVG', group=groupQuickAccess, inline=groupQuickAccess)
+plotRJB = input.bool(defval=false, title='Plot RJB',group=groupQuickAccess, inline=groupQuickAccess)
+plotPVT = input.bool(defval=true, title='Plot Pivots', group=groupQuickAccess, inline=groupQuickAccess)
+plotBOS = input.bool(defval=false, title='Plot BoS', group=groupQuickAccess, inline=groupQuickAccess)
+plotOBFVG = input.bool(defval=true, title='Plot Stacked OB+FVG', group=groupQuickAccess, inline=groupQuickAccess, tooltip='Marks the candle (default with a diamond ◆) when an OB & FVG are stacked, showing momentum')
+plotLiq = input.bool(defval=true, title='Plot Liquidity', group=groupQuickAccess, inline=groupQuickAccess)
+
+
 obBullColor = input.color(defval=color.new(color.green, 90), title='Bullish OB Color', inline='Set Custom Color', group='Order Blocks')
 obBearColor = input.color(defval=color.new(color.red, 90), title='Bearish OB Color', inline='Set Custom Color', group='Order Blocks')
 obBoxBorder = input.string(defval=line.style_solid, title='OB Box Border Style', options=[line.style_dashed, line.style_dotted, line.style_solid], group='Order Blocks', tooltip='To disable border, set Border Width below to 0')
@@ -11,7 +21,6 @@ obMaxBoxSet = input.int(defval=10, title='Maximum OB Box Displayed', minval=1, m
 filterMitOB = input.bool(defval=false, title='Custom Color Mitigated OB', group='Order Blocks')
 mitOBColor = input.color(defval=color.new(color.gray, 90), title='Mitigated OB Color', group='Order Blocks', inline='Set Custom Color Mit OB', tooltip='Set Transparency to 0 to make mitigated OB disappear')
 
-plotFVG = input.bool(defval=true, title='Plot FVG', group='Fair Value Gaps', inline='FVG sets')
 plotStructureBreakingFVG = input.bool(defval=true, title='Plot Structure Breaking FVG', group='Fair Value Gaps', inline='FVG sets')
 fvgBullColor = input.color(defval=color.new(color.aqua, 90), title='Bullish FVG Color', inline='Set Custom Color', group='Fair Value Gaps')
 fvgBearColor = input.color(defval=color.new(color.orange, 90), title='Bearish FVG Color', inline='Set Custom Color', group='Fair Value Gaps')
@@ -22,7 +31,6 @@ fvgMaxBoxSet = input.int(defval=10, title='Maximum FVG Box Displayed', minval=1,
 filterMitFVG = input.bool(defval=false, title='Custom Color Mitigated FVG', group='Fair Value Gaps')
 mitFVGColor = input.color(defval=color.new(color.gray, 90), title='Mitigated FVG Color', group='Fair Value Gaps', inline='Set Custom Color Mit FVG', tooltip='Set Transparency to 0 to make mitigated FVG disappear')
 
-plotRJB = input.bool(defval=false, title='Plot RJB', group='Rejection Blocks', inline='RJB sets')
 rjbBullColor = input.color(defval=color.new(#a6ff00, 90), title='Bullish RJB Color', inline='Set Custom Color', group='Rejection Blocks')
 rjbBearColor = input.color(defval=color.new(#ff00ce, 90), title='Bearish RJB Color', inline='Set Custom Color', group='Rejection Blocks')
 rjbBoxBorder = input.string(defval=line.style_solid, title='RJB Box Border Style', options=[line.style_dashed, line.style_dotted, line.style_solid], group='Rejection Blocks', tooltip='To disable border, set Border Width below to 0')
@@ -31,17 +39,14 @@ rjbMaxBoxSet = input.int(defval=10, title='Maximum RJB Box Displayed', minval=1,
 filterMitRJB = input.bool(defval=false, title='Custom Color Mitigated RJB', group='Rejection Blocks')
 mitRJBColor = input.color(defval=color.new(color.gray, 90), title='Mitigated RJB Color', group='Rejection Blocks', inline='Set Custom Color Mit RJB', tooltip='Set to 100 to make mitigated RJB disappear')
 
-plotPVT = input.bool(defval=true, title='Plot Pivots', group='Pivots')
 pivotLookup  = input.int(defval=1, minval=1, maxval=5,title='Pivot Lookup', group='Pivots', tooltip='Minimum = 1, Maximum = 5')
 pvtTopColor = input.color(defval=color.new(color.red, 0), title='Pivot Top Color', group='Pivots', inline='PVT Color')
 pvtBottomColor = input.color(defval=color.new(color.green, 0), title='Pivot Bottom Color', group='Pivots', inline='PVT Color')
 
-plotLiq = input.bool(defval=true, title='Plot Liquidity', group='Liquidity')
 pvtStyle = input.string(defval=line.style_dashed, title='Liquidity Line Style', options=[line.style_solid, line.style_dotted, line.style_dashed, line.style_arrow_left, line.style_arrow_right, line.style_arrow_both], group='Liquidity')
 pvtMax = input.int(defval=10, title='Maximum Liquidity Displayed', minval=1, maxval=500, group='Liquidity', tooltip='Minimum = 1, Maximum = 500')
 
 
-plotBOS = input.bool(defval=false, title='Plot BoS', group='Crossovers', inline='BOS sets')
 useHighLowForBullishBoS = input.bool(defval=false, title='Use High/Low for Bullish BoS (for Bearish setup)', group='Crossovers')
 useHighLowForBearishBoS = input.bool(defval=false, title='Use High/Low for Bearish BoS (for Bullish setup)', group='Crossovers')
 bosBoxFlag  = input.bool(title='BoS Box Length Manually', defval=false, group='Crossovers', tooltip='If activated the BoS Boxes will not extend unitl crossed by price. Instead will extend by the amount of bars choosen in the "Set BoS Box Length Manually" option')
@@ -60,7 +65,6 @@ plotPPDD = input.bool(defval=true, title="Plot PPDD OB's", group='Qualitative in
 ppddBullColor = input.color(defval=color.new(color.green, 0), title="Bullish PPDD OB's Color", group='Qualitative indicators', inline='PPDD Color')
 ppddBearColor = input.color(defval=color.new(color.red, 0), title="Bearish PPDD OB's Color", group='Qualitative indicators', inline='PPDD Color')
 
-plotOBFVG = input.bool(defval=true, title='Plot Stacked OB+FVG', group='Qualitative indicators', tooltip='Marks the candle (default with a diamond ◆) when an OB & FVG are stacked, showing momentum')
 obfvgBullColor = input.color(defval=color.new(color.green, 0), title='Bullish Stacked OB+FVG Color', group='Qualitative indicators', inline='OBFVG Color')
 obfvgBearColor = input.color(defval=color.new(color.red, 0), title='Bearish Stacked OB+FVG Color', group='Qualitative indicators', inline='OBFVG Color')
 
